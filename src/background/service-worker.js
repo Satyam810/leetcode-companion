@@ -376,17 +376,17 @@ async function fetchLeetCodeStats() {
       for (const timestamp in submissionCalendar) {
         if (submissionCalendar[timestamp] > 0) {
           const date = new Date(parseInt(timestamp, 10) * 1000);
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
+          const year = date.getUTCFullYear();
+          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(date.getUTCDate()).padStart(2, '0');
           activeDates.add(`${year}-${month}-${day}`);
         }
       }
 
       const formatDate = (d) => {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
+        const y = d.getUTCFullYear();
+        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(d.getUTCDate()).padStart(2, '0');
         return `${y}-${m}-${day}`;
       };
 
@@ -423,7 +423,7 @@ async function fetchLeetCodeStats() {
       } else {
         currentStreakVal = 0;
       }
-      console.log('[LC-Companion SW] Calculated current streak (local-only):', currentStreakVal, 'Best streak:', bestStreakVal);
+      console.log('[LC-Companion SW] Calculated current streak (UTC-only):', currentStreakVal, 'Best streak:', bestStreakVal);
     } catch (e) {
       console.error('[LC-Companion SW] Error calculating current streak:', e);
     }

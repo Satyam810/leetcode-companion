@@ -108,11 +108,13 @@ async function handleToggleSidebar() {
   if (!result?.isProblem) {
     return alert('Please navigate to a LeetCode problem page first.');
   }
-  chrome.tabs.sendMessage(result.tab.id, { type: 'OPEN_SIDEBAR' }, () => {
-    if (chrome.runtime.lastError) {
-      alert('Content script not ready. Refresh the LeetCode tab and try again.');
-    }
-    window.close();
+  chrome.storage.sync.set({ showSidebar: true }, () => {
+    chrome.tabs.sendMessage(result.tab.id, { type: 'OPEN_SIDEBAR' }, () => {
+      if (chrome.runtime.lastError) {
+        alert('Content script not ready. Refresh the LeetCode tab and try again.');
+      }
+      window.close();
+    });
   });
 }
 
@@ -135,11 +137,13 @@ async function handleHelpMeSolve() {
   if (!result?.isProblem) {
     return alert('Please navigate to a LeetCode problem page first.');
   }
-  chrome.tabs.sendMessage(result.tab.id, { type: 'HELP_ME_SOLVE' }, () => {
-    if (chrome.runtime.lastError) {
-      alert('Content script not ready. Refresh the LeetCode tab and try again.');
-    }
-    window.close();
+  chrome.storage.sync.set({ showSidebar: true }, () => {
+    chrome.tabs.sendMessage(result.tab.id, { type: 'HELP_ME_SOLVE' }, () => {
+      if (chrome.runtime.lastError) {
+        alert('Content script not ready. Refresh the LeetCode tab and try again.');
+      }
+      window.close();
+    });
   });
 }
 
