@@ -14,12 +14,18 @@
   </p>
 
   <p>
+    <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/Code_Style-Prettier-FF69B4?style=flat-square&logo=prettier&logoColor=white" alt="Code Style: Prettier" /></a>
+    <a href="#-privacy--security"><img src="https://img.shields.io/badge/Security-100%25_Safe-success?style=flat-square" alt="Security: 100% Safe" /></a>
+    <a href="https://groq.com"><img src="https://img.shields.io/badge/AI_Engine-Groq_LLaMA_3.3-orange?style=flat-square" alt="AI Engine: Groq" /></a>
+  </p>
+
+  <p>
     🛡️ <strong>Auto-Solve Streak Protection</strong> &nbsp;·&nbsp; 🤖 <strong>AI-Powered Learning</strong> &nbsp;·&nbsp; 🔄 <strong>Automatic GitHub Sync</strong> &nbsp;·&nbsp; 📊 <strong>Progress Dashboard</strong>
   </p>
 
   <br />
 
-  <img src="assets/screenshots/hero-banner.png" alt="LeetCode Companion Preview" width="680" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0,0,0,0.15);" />
+  <img src="assets/screenshots/hero-banner.png" alt="LeetCode Companion Preview" width="700" />
 
 </div>
 
@@ -102,7 +108,7 @@ graph TD
 *Don't just solve problems. Understand them.*
 
 <div align="center">
-  <img src="assets/screenshots/ai-sidebar.png" alt="AI Sidebar Panel" width="600" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+  <img src="assets/screenshots/ai-sidebar.png" alt="AI Sidebar Panel" width="600" />
 </div>
 
 When you're stuck on a problem, click **"Help Me Solve"** to open a premium draggable panel containing:
@@ -117,7 +123,7 @@ When you're stuck on a problem, click **"Help Me Solve"** to open a premium drag
 *Every problem you solve automatically becomes a GitHub contribution.*
 
 <div align="center">
-  <img src="assets/screenshots/github-sync.png" alt="GitHub Sync Workflow" width="600" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+  <img src="assets/screenshots/github-sync.png" alt="GitHub Sync Workflow" width="600" />
 </div>
 
 Every synced solution is enriched and organized with clean file headers containing the problem description, difficulty level, and code formatted in comments matching the target language.
