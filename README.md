@@ -4,7 +4,7 @@
 
   # LeetCode Companion
 
-  ### Never Lose Your Streak Again — Auto-Solve Protection, AI-Powered Hints, and Seamless GitHub Sync.
+  ### The Ultimate Chrome Extension to Protect Your Streak — featuring Auto-Solve, AI-Powered Hints, and Seamless GitHub Sync.
 
   <p>
     <a href="https://chrome.google.com/webstore"><img src="https://img.shields.io/badge/Chrome_Web_Store-v1.0.0-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Web Store" /></a>
