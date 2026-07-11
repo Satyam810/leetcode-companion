@@ -222,8 +222,27 @@ async function init() {
   });
 
   $('btn-test-auto-solve').addEventListener('click', () => {
-    chrome.runtime.sendMessage({ type: 'FORCE_RUN_AUTO_SOLVE' });
-    window.close(); // close popup immediately so user can see the tab launch
+    const btn = $('btn-test-auto-solve');
+    const oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="spinner-icon" style="animation: spin 1s linear infinite; margin-right: 2px;">
+      <line x1="12" y1="2" x2="12" y2="6"/>
+      <line x1="12" y1="18" x2="12" y2="22"/>
+      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+      <line x1="2" y1="12" x2="6" y2="12"/>
+      <line x1="18" y1="12" x2="22" y2="12"/>
+      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+    </svg> Launching...`;
+    chrome.runtime.sendMessage({ type: 'FORCE_RUN_AUTO_SOLVE' }, () => {
+      // Re-enable and close
+      setTimeout(() => {
+        btn.innerHTML = oldHtml;
+        btn.disabled = false;
+        window.close();
+      }, 300);
+    });
   });
 
   // Live-update stats when storage changes (background just synced)

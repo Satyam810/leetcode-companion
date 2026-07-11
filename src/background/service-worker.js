@@ -570,19 +570,24 @@ async function runAutoSolveImmediately() {
     const daily = await fetchDailyChallenge();
     if (!daily) {
       console.warn('[LC-Companion SW] Failed to fetch daily challenge for manual test.');
-      return;
+      return false;
     }
     console.log('[LC-Companion SW] Manual test trigger: Opening challenge in new tab:', daily.titleSlug);
-    chrome.storage.local.set({ autoSolveSlug: daily.titleSlug }, () => {
-      chrome.tabs.create({
-        url: `https://leetcode.com/problems/${daily.titleSlug}/`,
-        active: true
-      }, tab => {
-        chrome.storage.local.set({ activeAutoSolveTabId: tab.id });
+    return new Promise(resolve => {
+      chrome.storage.local.set({ autoSolveSlug: daily.titleSlug }, () => {
+        chrome.tabs.create({
+          url: `https://leetcode.com/problems/${daily.titleSlug}/`,
+          active: true
+        }, tab => {
+          chrome.storage.local.set({ activeAutoSolveTabId: tab.id }, () => {
+            resolve(true);
+          });
+        });
       });
     });
   } catch (err) {
     console.error('[LC-Companion SW] runAutoSolveImmediately error:', err);
+    return false;
   }
 }
 
