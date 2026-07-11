@@ -376,46 +376,32 @@ async function fetchLeetCodeStats() {
       for (const timestamp in submissionCalendar) {
         if (submissionCalendar[timestamp] > 0) {
           const date = new Date(parseInt(timestamp, 10) * 1000);
-          const year = date.getUTCFullYear();
-          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-          const day = String(date.getUTCDate()).padStart(2, '0');
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
           activeDates.add(`${year}-${month}-${day}`);
         }
       }
 
       const formatDate = (d) => {
-        const yLocal = d.getFullYear();
-        const mLocal = String(d.getMonth() + 1).padStart(2, '0');
-        const dLocal = String(d.getDate()).padStart(2, '0');
-        
-        const yUtc = d.getUTCFullYear();
-        const mUtc = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const dUtc = String(d.getUTCDate()).padStart(2, '0');
-        
-        return [`${yLocal}-${mLocal}-${dLocal}`, `${yUtc}-${mUtc}-${dUtc}`];
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
       };
 
       const now = new Date();
-      let todayActive = false;
-      let yesterdayActive = false;
-
-      const [todayLocal, todayUtc] = formatDate(now);
-      if (activeDates.has(todayLocal) || activeDates.has(todayUtc)) {
-        todayActive = true;
-      }
-
+      let todayActive = activeDates.has(formatDate(now));
+      
       const yesterday = new Date(now.getTime() - 86400000);
-      const [yesterdayLocal, yesterdayUtc] = formatDate(yesterday);
-      if (activeDates.has(yesterdayLocal) || activeDates.has(yesterdayUtc)) {
-        yesterdayActive = true;
-      }
+      let yesterdayActive = activeDates.has(formatDate(yesterday));
 
       if (todayActive) {
         currentStreakVal = 1;
         let tempDate = new Date(yesterday);
         while (true) {
-          const [l, u] = formatDate(tempDate);
-          if (activeDates.has(l) || activeDates.has(u)) {
+          const str = formatDate(tempDate);
+          if (activeDates.has(str)) {
             currentStreakVal++;
             tempDate.setTime(tempDate.getTime() - 86400000);
           } else {
@@ -426,8 +412,8 @@ async function fetchLeetCodeStats() {
         currentStreakVal = 1;
         let tempDate = new Date(yesterday.getTime() - 86400000);
         while (true) {
-          const [l, u] = formatDate(tempDate);
-          if (activeDates.has(l) || activeDates.has(u)) {
+          const str = formatDate(tempDate);
+          if (activeDates.has(str)) {
             currentStreakVal++;
             tempDate.setTime(tempDate.getTime() - 86400000);
           } else {
@@ -437,7 +423,7 @@ async function fetchLeetCodeStats() {
       } else {
         currentStreakVal = 0;
       }
-      console.log('[LC-Companion SW] Calculated current streak from calendar:', currentStreakVal, 'Best streak:', bestStreakVal);
+      console.log('[LC-Companion SW] Calculated current streak (local-only):', currentStreakVal, 'Best streak:', bestStreakVal);
     } catch (e) {
       console.error('[LC-Companion SW] Error calculating current streak:', e);
     }
