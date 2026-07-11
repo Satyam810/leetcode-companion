@@ -337,10 +337,11 @@ async function fetchLeetCodeStats() {
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
-        query: `query userSessionProgress($username: String!) {
+        query: `query queryProfileCalendar($username: String!) {
           matchedUser(username: $username) {
             userCalendar {
               streak
+              submissionCalendar
             }
             submitStats {
               acSubmissionNum {
@@ -366,7 +367,80 @@ async function fetchLeetCodeStats() {
     }
 
     const calendar = statsData.data?.matchedUser?.userCalendar || {};
-    const streakVal = calendar.streak || 0;
+    const bestStreakVal = calendar.streak || 0;
+
+    let currentStreakVal = 0;
+    try {
+      const submissionCalendar = JSON.parse(calendar.submissionCalendar || '{}');
+      const activeDates = new Set();
+      for (const timestamp in submissionCalendar) {
+        if (submissionCalendar[timestamp] > 0) {
+          const date = new Date(parseInt(timestamp, 10) * 1000);
+          const year = date.getUTCFullYear();
+          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(date.getUTCDate()).padStart(2, '0');
+          activeDates.add(`${year}-${month}-${day}`);
+        }
+      }
+
+      const formatDate = (d) => {
+        const yLocal = d.getFullYear();
+        const mLocal = String(d.getMonth() + 1).padStart(2, '0');
+        const dLocal = String(d.getDate()).padStart(2, '0');
+        
+        const yUtc = d.getUTCFullYear();
+        const mUtc = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dUtc = String(d.getUTCDate()).padStart(2, '0');
+        
+        return [`${yLocal}-${mLocal}-${dLocal}`, `${yUtc}-${mUtc}-${dUtc}`];
+      };
+
+      const now = new Date();
+      let todayActive = false;
+      let yesterdayActive = false;
+
+      const [todayLocal, todayUtc] = formatDate(now);
+      if (activeDates.has(todayLocal) || activeDates.has(todayUtc)) {
+        todayActive = true;
+      }
+
+      const yesterday = new Date(now.getTime() - 86400000);
+      const [yesterdayLocal, yesterdayUtc] = formatDate(yesterday);
+      if (activeDates.has(yesterdayLocal) || activeDates.has(yesterdayUtc)) {
+        yesterdayActive = true;
+      }
+
+      if (todayActive) {
+        currentStreakVal = 1;
+        let tempDate = new Date(yesterday);
+        while (true) {
+          const [l, u] = formatDate(tempDate);
+          if (activeDates.has(l) || activeDates.has(u)) {
+            currentStreakVal++;
+            tempDate.setTime(tempDate.getTime() - 86400000);
+          } else {
+            break;
+          }
+        }
+      } else if (yesterdayActive) {
+        currentStreakVal = 1;
+        let tempDate = new Date(yesterday.getTime() - 86400000);
+        while (true) {
+          const [l, u] = formatDate(tempDate);
+          if (activeDates.has(l) || activeDates.has(u)) {
+            currentStreakVal++;
+            tempDate.setTime(tempDate.getTime() - 86400000);
+          } else {
+            break;
+          }
+        }
+      } else {
+        currentStreakVal = 0;
+      }
+      console.log('[LC-Companion SW] Calculated current streak from calendar:', currentStreakVal, 'Best streak:', bestStreakVal);
+    } catch (e) {
+      console.error('[LC-Companion SW] Error calculating current streak:', e);
+    }
 
     const currentStreak = await new Promise(resolve => {
       chrome.storage.local.get(['streak'], data => {
@@ -375,8 +449,8 @@ async function fetchLeetCodeStats() {
     });
 
     const streak = {
-      current: streakVal,
-      longest: Math.max(streakVal, currentStreak.longest || 0),
+      current: currentStreakVal,
+      longest: Math.max(bestStreakVal, currentStreak.longest || 0),
       lastSolvedDate: new Date().toISOString().slice(0, 10)
     };
 
