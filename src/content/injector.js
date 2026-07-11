@@ -1056,17 +1056,37 @@
     }
 
     function isUserLoggedIn() {
-      const avatar = document.querySelector('#navbar_user_avatar') || 
-                     document.querySelector('[class*="avatar"]') || 
-                     document.querySelector('[class*="profile"] img') ||
-                     document.querySelector('.avatar-input-wrapper') ||
-                     document.querySelector('[class*="UserMenu"]') ||
-                     document.querySelector('[class*="user-menu"]');
-      const signInLink = document.querySelector('a[href*="/accounts/login"]') || 
-                         document.querySelector('a[href*="/login"]');
-      if (signInLink && !avatar) {
+      // 1. Check if LeetCode editor explicitly shows the login warning
+      if (document.body.innerText.includes('You need to log in') || 
+          document.body.innerText.includes('sign up to run or submit')) {
         return false;
       }
+      
+      // 2. Check for explicit login/register buttons in the DOM by text
+      const buttons = document.querySelectorAll('a, button, span, div');
+      for (const btn of buttons) {
+        const text = btn.textContent.trim().toLowerCase();
+        if (text === 'sign in' || text === 'log in' || text === 'register' || text === 'sign up') {
+          const avatar = document.querySelector('#navbar_user_avatar') || 
+                         document.querySelector('[class*="avatar"]') || 
+                         document.querySelector('[class*="profile"] img');
+          if (!avatar) {
+            return false;
+          }
+        }
+      }
+      
+      // 3. Check if we find any user menu or profile avatar indicators at all
+      const hasAvatar = document.querySelector('#navbar_user_avatar') || 
+                        document.querySelector('[class*="avatar"]') || 
+                        document.querySelector('[class*="profile"] img') ||
+                        document.querySelector('[class*="user-menu"]') ||
+                        document.querySelector('.avatar-input-wrapper') ||
+                        document.querySelector('a[href*="/profile"]');
+      if (!hasAvatar) {
+        return false;
+      }
+      
       return true;
     }
 
