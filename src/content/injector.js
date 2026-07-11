@@ -346,10 +346,121 @@
     }
     .lc-typing-dot:nth-child(2) { animation-delay: .15s; }
     .lc-typing-dot:nth-child(3) { animation-delay: .3s; }
-    @keyframes lc-bounce {
-      from { opacity: .3; transform: translateY(0); }
-      to   { opacity: 1; transform: translateY(-4px); }
     }
+
+    /* ── Tab Layout ──────────────────────────────────────── */
+    .lc-tabs {
+      display: flex; border-bottom: 1px solid rgba(255,255,255,0.06); background: #11131c; flex-shrink: 0;
+    }
+    .lc-tab-btn {
+      flex: 1; padding: 12px; background: none; border: none; color: #9094b4;
+      font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+    }
+    .lc-tab-btn.active {
+      color: #818cf8; border-bottom-color: #818cf8; background: rgba(129, 140, 248, 0.03);
+    }
+    .lc-tab-btn:hover:not(.active) {
+      color: #fff; background: rgba(255,255,255,0.02);
+    }
+    
+    /* ── Stats Card Layout ───────────────────────────────── */
+    .lc-stats-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;
+    }
+    .lc-stat-card {
+      background: linear-gradient(135deg, rgba(30, 34, 53, 0.6) 0%, rgba(21, 23, 33, 0.8) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px; padding: 12px; text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .lc-stat-card:hover {
+      transform: translateY(-2px); border-color: rgba(129, 140, 248, 0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .lc-stat-card:last-child {
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.08) 0%, rgba(21, 23, 33, 0.8) 100%);
+      border-color: rgba(129, 140, 248, 0.18);
+    }
+    .lc-stat-card:last-child:hover {
+      border-color: rgba(129, 140, 248, 0.45);
+    }
+    .lc-stat-value { font-size: 20px; font-weight: 700; line-height: 1.1; }
+    .lc-stat-value.easy { color: #34d399; }
+    .lc-stat-value.medium { color: #fbbf24; }
+    .lc-stat-value.hard { color: #f87171; }
+    .lc-stat-value.streak { color: #818cf8; }
+    .lc-stat-label { font-size: 9px; color: #9094b4; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .lc-stat-sub { font-size: 9px; color: #5c607d; margin-top: 2px; }
+
+    /* ── Action Rows ─────────────────────────────────────── */
+    .lc-sidebar-action-btn {
+      display: flex; align-items: center; gap: 12px;
+      background: linear-gradient(135deg, rgba(30, 34, 53, 0.6) 0%, rgba(21, 23, 33, 0.7) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px; padding: 10px 12px; cursor: pointer;
+      transition: all 0.25s ease; text-align: left; width: 100%;
+    }
+    .lc-sidebar-action-btn:hover {
+      border-color: rgba(129, 140, 248, 0.35);
+      background: rgba(129, 140, 248, 0.06);
+      transform: translateX(2px);
+    }
+    .lc-action-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 14px;
+    }
+    .lc-action-icon.yellow { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
+    .lc-action-icon.green { background: rgba(52, 211, 153, 0.12); color: #34d399; }
+    .lc-action-text strong { display: block; font-size: 12.5px; font-weight: 600; color: #fff; }
+    .lc-action-text span { display: block; font-size: 10px; color: #9094b4; margin-top: 1px; }
+
+    /* ── Streak Protection Card ────────────────────────── */
+    .lc-sidebar-card {
+      background: linear-gradient(135deg, rgba(30, 34, 53, 0.5) 0%, rgba(21, 23, 33, 0.6) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px; padding: 14px; margin-bottom: 16px;
+    }
+    .lc-sidebar-card.enabled {
+      border-color: rgba(129, 140, 248, 0.22);
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.03) 0%, rgba(21, 23, 33, 0.7) 100%);
+    }
+    .lc-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .lc-card-title { font-weight: 600; font-size: 13px; color: #fff; }
+    .lc-card-sub { font-size: 10.5px; color: #9094b4; margin-top: 1px; }
+    
+    .lc-switch { position: relative; display: inline-block; width: 34px; height: 18px; margin-left: auto; }
+    .lc-switch input { opacity: 0; width: 0; height: 0; }
+    .lc-slider { position: absolute; cursor: pointer; inset: 0; background: #2d3154; border-radius: 18px; transition: 0.3s; }
+    .lc-slider::before { content: ''; position: absolute; height: 12px; width: 12px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+    .lc-switch input:checked + .lc-slider { background: #818cf8; }
+    .lc-switch input:checked + .lc-slider::before { transform: translateX(16px); }
+
+    .lc-time-picker {
+      display: flex; align-items: center; gap: 6px;
+      padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: 10px;
+    }
+    .lc-time-select, .lc-time-input {
+      background: #0f111a; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px; padding: 4px 6px; color: #fff;
+      font-size: 11.5px; font-weight: 600; text-align: center; outline: none;
+    }
+    .lc-time-select:focus, .lc-time-input:focus { border-color: #818cf8; }
+    .lc-time-select { width: 50px; }
+    .lc-time-input { width: 38px; }
+    .lc-time-ampm { width: 50px; }
+    
+    .lc-action-row { display: flex; gap: 8px; margin-top: 10px; }
+    .lc-action-btn {
+      flex: 1; padding: 7px 10px; border-radius: 6px; border: none;
+      font-weight: 600; font-size: 11px; cursor: pointer; text-align: center;
+      transition: all 0.2s;
+    }
+    .lc-action-btn.primary { background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%); color: #fff; }
+    .lc-action-btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #c8cae6; }
+    .lc-action-btn.secondary:hover { background: rgba(255,255,255,0.02); color: #fff; }
   `;
 
   function injectStyles() {
@@ -374,25 +485,110 @@
           </div>
           <button id="lc-panel-close" title="Close">×</button>
         </div>
-        <div id="lc-panel-content">
-          <p style="color:#5c607d; text-align:center; margin-top:40px; font-size:12px;">
-            Click <strong style="color:#fbbf24">Help Me Solve</strong> to get step-by-step guidance & hints,
-            or <strong style="color:#9094b4">Sync</strong> to push your solution to GitHub.
-          </p>
+
+        <!-- Tab Bar -->
+        <div class="lc-tabs">
+          <button class="lc-tab-btn active" id="lc-tab-dashboard">📊 Dashboard</button>
+          <button class="lc-tab-btn" id="lc-tab-ai">🤖 AI Assistant</button>
         </div>
-        <div id="lc-panel-actions">
-          <button class="lc-btn lc-btn-warn" id="lc-btn-help" style="flex: 1.2;">💡 Help Me Solve</button>
-          <button class="lc-btn lc-btn-primary" id="lc-btn-autosolve" style="flex: 1.2; background: linear-gradient(135deg, #a78bfa, #7c3aed); border: none; color: #fff;">⚡ Auto-Solve</button>
-          <button class="lc-btn lc-btn-secondary" id="lc-btn-sync" style="flex: 0.8;">⬆ Sync</button>
+
+        <!-- Dashboard View -->
+        <div id="lc-view-dashboard" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 16px 18px;">
+          <!-- Stats Grid -->
+          <div class="lc-stats-grid">
+            <div class="lc-stat-card">
+              <div class="lc-stat-value easy" id="lc-db-easy">0</div>
+              <div class="lc-stat-label">Easy</div>
+            </div>
+            <div class="lc-stat-card">
+              <div class="lc-stat-value medium" id="lc-db-medium">0</div>
+              <div class="lc-stat-label">Medium</div>
+            </div>
+            <div class="lc-stat-card">
+              <div class="lc-stat-value hard" id="lc-db-hard">0</div>
+              <div class="lc-stat-label">Hard</div>
+            </div>
+            <div class="lc-stat-card">
+              <div class="lc-stat-value streak" id="lc-db-streak">0</div>
+              <div class="lc-stat-label">🔥 Streak</div>
+              <div class="lc-stat-sub" id="lc-db-streak-best">Best: 0</div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex; flex-direction:column; gap: 8px; margin-bottom:16px;">
+            <button class="lc-sidebar-action-btn" id="lc-db-btn-help">
+              <div class="lc-action-icon yellow">💡</div>
+              <div class="lc-action-text">
+                <strong>Help Me Solve</strong>
+                <span>Get step-by-step guidance & hints</span>
+              </div>
+            </button>
+            <button class="lc-sidebar-action-btn" id="lc-db-btn-sync">
+              <div class="lc-action-icon green">⬆</div>
+              <div class="lc-action-text">
+                <strong>Sync to GitHub</strong>
+                <span>Push current solution to your repo</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Streak Protection Card -->
+          <div class="lc-sidebar-card" id="lc-db-streak-card">
+            <div class="lc-card-header">
+              <div>
+                <div class="lc-card-title" style="font-size:12.5px; font-weight:600; color:#fff;">Streak Protection</div>
+                <div class="lc-card-sub" id="lc-db-streak-status">Checking schedule...</div>
+              </div>
+              <label class="lc-switch">
+                <input type="checkbox" id="lc-db-toggle-streak" />
+                <span class="lc-slider"></span>
+              </label>
+            </div>
+            
+            <div class="lc-time-picker" id="lc-db-time-picker">
+              <span style="font-size:11px; color:#9094b4;">Trigger:</span>
+              <select class="lc-time-select" id="lc-db-hour">
+                <option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option>
+                <option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+              </select>
+              <span style="color:#5c607d;">:</span>
+              <input type="text" class="lc-time-input" id="lc-db-minute" value="00" maxlength="2" />
+              <select class="lc-time-select lc-time-ampm" id="lc-db-ampm">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            
+            <div class="lc-action-row" id="lc-db-automation-actions">
+              <button class="lc-action-btn primary" id="lc-db-save-time">Save Schedule</button>
+              <button class="lc-action-btn secondary" id="lc-db-test-now">Test Trigger</button>
+            </div>
+          </div>
         </div>
-        <div id="lc-chat-bar">
-          <textarea id="lc-chat-input" placeholder="Ask a follow-up question..." rows="1"></textarea>
-          <button id="lc-chat-send" title="Send">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
+
+        <!-- AI Assistant View -->
+        <div id="lc-view-ai" style="display:none; flex-direction:column; flex: 1; overflow:hidden;">
+          <div id="lc-panel-content">
+            <p style="color:#5c607d; text-align:center; margin-top:40px; font-size:12px;">
+              Click <strong style="color:#fbbf24">Help Me Solve</strong> to get step-by-step guidance & hints,
+              or <strong style="color:#9094b4">Sync</strong> to push your solution to GitHub.
+            </p>
+          </div>
+          <div id="lc-panel-actions">
+            <button class="lc-btn lc-btn-warn" id="lc-btn-help" style="flex: 1.2;">💡 Help Me Solve</button>
+            <button class="lc-btn lc-btn-primary" id="lc-btn-autosolve" style="flex: 1.2; background: linear-gradient(135deg, #a78bfa, #7c3aed); border: none; color: #fff;">⚡ Auto-Solve</button>
+            <button class="lc-btn lc-btn-secondary" id="lc-btn-sync" style="flex: 0.8;">⬆ Sync</button>
+          </div>
+          <div id="lc-chat-bar">
+            <textarea id="lc-chat-input" placeholder="Ask a follow-up question..." rows="1"></textarea>
+            <button id="lc-chat-send" title="Send">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -422,6 +618,140 @@
     // Chat state for 2-way conversation
     let chatHistory = [];  // Array of { role: 'user'|'assistant', content: string }
 
+    const tabDashboard = document.getElementById('lc-tab-dashboard');
+    const tabAi = document.getElementById('lc-tab-ai');
+    const viewDashboard = document.getElementById('lc-view-dashboard');
+    const viewAi = document.getElementById('lc-view-ai');
+
+    function loadDbStats() {
+      chrome.storage.local.get(['stats', 'streak'], (data) => {
+        const stats = data.stats || { easy: 0, medium: 0, hard: 0 };
+        const streak = data.streak || { current: 0, longest: 0 };
+        
+        const dbEasy = document.getElementById('lc-db-easy');
+        const dbMedium = document.getElementById('lc-db-medium');
+        const dbHard = document.getElementById('lc-db-hard');
+        const dbStreak = document.getElementById('lc-db-streak');
+        const dbStreakBest = document.getElementById('lc-db-streak-best');
+        
+        if (dbEasy) dbEasy.textContent = stats.easy;
+        if (dbMedium) dbMedium.textContent = stats.medium;
+        if (dbHard) dbHard.textContent = stats.hard;
+        if (dbStreak) dbStreak.textContent = streak.current;
+        if (dbStreakBest) dbStreakBest.textContent = `Best: ${streak.longest}`;
+      });
+    }
+
+    function loadDbStreakSettings() {
+      chrome.storage.local.get(['streakProtection', 'scheduledTime'], (data) => {
+        const isEnabled = data.streakProtection === true;
+        const timeStr = data.scheduledTime || '23:00';
+        
+        const toggleVal = document.getElementById('lc-db-toggle-streak');
+        const hourSelect = document.getElementById('lc-db-hour');
+        const minInput = document.getElementById('lc-db-minute');
+        const ampmSelect = document.getElementById('lc-db-ampm');
+        const card = document.getElementById('lc-db-streak-card');
+        const statusText = document.getElementById('lc-db-streak-status');
+        
+        if (toggleVal) toggleVal.checked = isEnabled;
+        if (card) {
+          if (isEnabled) card.classList.add('enabled');
+          else card.classList.remove('enabled');
+        }
+        
+        if (statusText) {
+          statusText.textContent = isEnabled ? `Auto-solve active at ${timeStr}` : 'Automated protection disabled';
+        }
+        
+        const [hour24, min] = timeStr.split(':').map(Number);
+        let h12 = hour24 % 12;
+        if (h12 === 0) h12 = 12;
+        const ampm = hour24 >= 12 ? 'PM' : 'AM';
+        
+        if (hourSelect) hourSelect.value = String(h12).padStart(2, '0');
+        if (minInput) minInput.value = String(min).padStart(2, '0');
+        if (ampmSelect) ampmSelect.value = ampm;
+      });
+    }
+
+    function saveDbSchedule() {
+      const toggleVal = document.getElementById('lc-db-toggle-streak');
+      const hourSelect = document.getElementById('lc-db-hour');
+      const minInput = document.getElementById('lc-db-minute');
+      const ampmSelect = document.getElementById('lc-db-ampm');
+      
+      const isEnabled = toggleVal ? toggleVal.checked : false;
+      const h12 = parseInt(hourSelect ? hourSelect.value : '11', 10);
+      let minStr = minInput ? minInput.value.trim() : '00';
+      const ampm = ampmSelect ? ampmSelect.value : 'PM';
+      
+      let min = parseInt(minStr, 10);
+      if (isNaN(min) || min < 0 || min > 59) min = 0;
+      minStr = String(min).padStart(2, '0');
+      if (minInput) minInput.value = minStr;
+      
+      let h24 = h12;
+      if (ampm === 'PM' && h12 !== 12) h24 += 12;
+      if (ampm === 'AM' && h12 === 12) h24 = 0;
+      const timeStr = `${String(h24).padStart(2, '0')}:${minStr}`;
+      
+      chrome.storage.local.set({
+        streakProtection: isEnabled,
+        scheduledTime: timeStr
+      }, () => {
+        chrome.runtime.sendMessage({ type: 'UPDATE_ALARM' }, () => {
+          const saveBtn = document.getElementById('lc-db-save-time');
+          if (saveBtn) {
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saved! ✓';
+            saveBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            setTimeout(() => {
+              saveBtn.textContent = originalText;
+              saveBtn.style.background = '';
+              loadDbStreakSettings();
+            }, 1500);
+          }
+        });
+      });
+    }
+
+    function runDbTest() {
+      const testBtn = document.getElementById('lc-db-test-now');
+      if (testBtn) {
+        testBtn.disabled = true;
+        testBtn.textContent = 'Testing...';
+      }
+      
+      chrome.runtime.sendMessage({ type: 'RUN_TEST_TRIGGER' }, (res) => {
+        if (testBtn) {
+          testBtn.disabled = false;
+          testBtn.textContent = 'Test Trigger';
+        }
+        if (res && res.success) {
+          sub.textContent = 'Test triggered successfully!';
+        } else {
+          sub.textContent = 'Test trigger failed.';
+        }
+      });
+    }
+
+    function switchTab(tabName) {
+      if (tabName === 'dashboard') {
+        tabDashboard.classList.add('active');
+        tabAi.classList.remove('active');
+        viewDashboard.style.display = 'flex';
+        viewAi.style.display = 'none';
+        loadDbStats();
+        loadDbStreakSettings();
+      } else {
+        tabDashboard.classList.remove('active');
+        tabAi.classList.add('active');
+        viewDashboard.style.display = 'none';
+        viewAi.style.display = 'flex';
+      }
+    }
+
     function openPanel()  {
       const root = document.getElementById('lc-companion-root');
       if (root) {
@@ -429,12 +759,13 @@
       }
       panel.classList.add('open');
       toggle.style.display = 'none';
+      loadDbStats();
+      loadDbStreakSettings();
     }
     
     function closePanel() {
       panel.classList.remove('open');
       toggle.style.display = '';
-      // If the user previously hid the sidebar completely, re-hide it when closing the panel
       chrome.storage.sync.get(['showSidebar'], (data) => {
         if (data.showSidebar === false) {
           const root = document.getElementById('lc-companion-root');
@@ -1332,16 +1663,57 @@
 
     chatSend.addEventListener('click', sendChatMessage);
 
+    // Sidebar tab bindings
+    if (tabDashboard) tabDashboard.addEventListener('click', () => switchTab('dashboard'));
+    if (tabAi) tabAi.addEventListener('click', () => switchTab('ai'));
+
+    // Dashboard quick actions
+    const dbBtnHelp = document.getElementById('lc-db-btn-help');
+    if (dbBtnHelp) {
+      dbBtnHelp.addEventListener('click', () => {
+        switchTab('ai');
+        doHelpMeSolve();
+      });
+    }
+
+    const dbBtnSync = document.getElementById('lc-db-btn-sync');
+    if (dbBtnSync) {
+      dbBtnSync.addEventListener('click', doSync);
+    }
+
+    // Streak protection schedule hooks
+    const dbToggleStreak = document.getElementById('lc-db-toggle-streak');
+    if (dbToggleStreak) {
+      dbToggleStreak.addEventListener('change', () => {
+        const card = document.getElementById('lc-db-streak-card');
+        if (card) {
+          if (dbToggleStreak.checked) card.classList.add('enabled');
+          else card.classList.remove('enabled');
+        }
+        saveDbSchedule();
+      });
+    }
+
+    const dbSaveTime = document.getElementById('lc-db-save-time');
+    if (dbSaveTime) {
+      dbSaveTime.addEventListener('click', saveDbSchedule);
+    }
+
+    const dbTestNow = document.getElementById('lc-db-test-now');
+    if (dbTestNow) {
+      dbTestNow.addEventListener('click', runDbTest);
+    }
+
     document.getElementById('lc-btn-help').addEventListener('click', doHelpMeSolve);
     document.getElementById('lc-btn-autosolve').addEventListener('click', doAutoSolveLoop);
     document.getElementById('lc-btn-sync').addEventListener('click', doSync);
 
-    // Listen for messages from popup buttons
+    // Listen for messages from popup/extension actions
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-      if (msg.type === 'HELP_ME_SOLVE')    { doHelpMeSolve(); sendResponse({ success: true }); }
-      if (msg.type === 'AUTO_SOLVE')        { doAutoSolveLoop(); sendResponse({ success: true }); }
+      if (msg.type === 'HELP_ME_SOLVE')    { switchTab('ai'); doHelpMeSolve(); sendResponse({ success: true }); }
+      if (msg.type === 'AUTO_SOLVE')        { switchTab('ai'); doAutoSolveLoop(); sendResponse({ success: true }); }
       if (msg.type === 'SYNC_TO_GITHUB')   { doSync(); sendResponse({ success: true }); }
-      if (msg.type === 'OPEN_SIDEBAR')     { handleToggleFromPopup(); sendResponse({ success: true }); }
+      if (msg.type === 'OPEN_SIDEBAR')     { openPanel(); switchTab('dashboard'); sendResponse({ success: true }); }
       if (msg.type === 'CLOSE_SIDEBAR')    { closePanel(); sendResponse({ success: true }); }
     });
 
