@@ -248,6 +248,65 @@
     .time-ampm   { width: 52px; }
     .time-colon  { color: var(--text-muted); font-weight: 700; font-size: 14px; line-height: 1; }
 
+    #automation-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+    }
+    .save-time-btn {
+      flex: 1;
+      background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+    }
+    .save-time-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    .save-time-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .save-time-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+      background: var(--border);
+    }
+    .save-time-btn.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      box-shadow: none;
+    }
+    .save-time-btn.secondary:hover:not(:disabled) {
+      border-color: var(--border-hover);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-primary);
+    }
+    
+    .time-picker, #automation-actions {
+      transition: opacity 0.25s ease;
+    }
+    .automation-card:not(.enabled) .time-picker,
+    .automation-card:not(.enabled) #automation-actions {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
     /* ── Footer ──────────────────────────────────── */
     .footer {
       margin: 20px 18px 16px;
@@ -448,6 +507,20 @@
             <option value="PM" selected>PM</option>
           </select>
         </div>
+      </div>
+      <div class="automation-actions" id="automation-actions">
+        <button class="save-time-btn" id="btn-save-streak-time" title="Apply and Save trigger settings">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Save Schedule
+        </button>
+        <button class="save-time-btn secondary" id="btn-test-auto-solve" title="Trigger Auto-Solve on today's daily challenge tab immediately">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Test Trigger
+        </button>
       </div>
     </div>
   </div>

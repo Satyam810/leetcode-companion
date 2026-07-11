@@ -42,9 +42,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleSyncLeetCodeStats(sendResponse);
       return true;
 
-    case 'UPDATE_STATS':
-      // Legacy – keep for safety
-      handleUpdateStats(message.payload, sendResponse);
+    case 'FORCE_CHECK_STREAK_PROTECTION':
+      checkStreakProtection().then(() => sendResponse({ success: true }));
+      return true;
+
+    case 'FORCE_RUN_AUTO_SOLVE':
+      runAutoSolveImmediately().then(() => sendResponse({ success: true }));
       return true;
 
     default:
@@ -61,9 +64,9 @@ chrome.alarms.onAlarm.addListener(alarm => {
 
 // Ensure alarm exists and runs every 1 minute
 chrome.alarms.get('streak-protection-alarm', alarm => {
-  if (!alarm) {
+  if (!alarm || alarm.periodInMinutes !== 1) {
     chrome.alarms.create('streak-protection-alarm', { periodInMinutes: 1 });
-    console.log('[LC-Companion SW] Created streak-protection-alarm (1 min check)');
+    console.log('[LC-Companion SW] Created/Updated streak-protection-alarm (1 min check)');
   }
 });
 
@@ -558,6 +561,28 @@ async function fetchDailyChallenge() {
   } catch (err) {
     console.error('[LC-Companion SW] fetchDailyChallenge error:', err);
     return null;
+  }
+}
+
+async function runAutoSolveImmediately() {
+  try {
+    console.log('[LC-Companion SW] Manual test trigger initiated. Fetching daily challenge...');
+    const daily = await fetchDailyChallenge();
+    if (!daily) {
+      console.warn('[LC-Companion SW] Failed to fetch daily challenge for manual test.');
+      return;
+    }
+    console.log('[LC-Companion SW] Manual test trigger: Opening challenge in new tab:', daily.titleSlug);
+    chrome.storage.local.set({ autoSolveSlug: daily.titleSlug }, () => {
+      chrome.tabs.create({
+        url: `https://leetcode.com/problems/${daily.titleSlug}/`,
+        active: true
+      }, tab => {
+        chrome.storage.local.set({ activeAutoSolveTabId: tab.id });
+      });
+    });
+  } catch (err) {
+    console.error('[LC-Companion SW] runAutoSolveImmediately error:', err);
   }
 }
 

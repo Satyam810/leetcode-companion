@@ -203,6 +203,29 @@ async function init() {
   $('streak-minute').addEventListener('change', saveStreakSettings);
   $('streak-minute').addEventListener('blur', saveStreakSettings);
 
+  $('btn-save-streak-time').addEventListener('click', async () => {
+    saveStreakSettings();
+    const btn = $('btn-save-streak-time');
+    const oldText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg> Applied!`;
+    
+    // Request instant check in background
+    chrome.runtime.sendMessage({ type: 'FORCE_CHECK_STREAK_PROTECTION' });
+
+    setTimeout(() => {
+      btn.innerHTML = oldText;
+      btn.disabled = false;
+    }, 1800);
+  });
+
+  $('btn-test-auto-solve').addEventListener('click', () => {
+    chrome.runtime.sendMessage({ type: 'FORCE_RUN_AUTO_SOLVE' });
+    window.close(); // close popup immediately so user can see the tab launch
+  });
+
   // Live-update stats when storage changes (background just synced)
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local') {
