@@ -1722,6 +1722,8 @@
           doAutoSolveLoop();
         }, 3000);
       }
+    });
+
     // Real-time synchronization when settings or stats change elsewhere
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === 'sync') {
