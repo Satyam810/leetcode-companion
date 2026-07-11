@@ -4,7 +4,7 @@
 
   <br />
   <a href="https://git.io/typing-svg">
-    <img src="https://readme-typing-svg.demolab.com?font=Outfit&size=30&duration=4000&pause=3000&color=6366F1&center=true&vCenter=true&width=800&height=70&lines=LeetCode+Companion+%E2%80%94+Chrome+Extension" alt="LeetCode Companion — Chrome Extension" />
+    <img src="https://readme-typing-svg.demolab.com?font=Outfit&size=30&duration=4000&pause=3000&color=209ced&center=true&vCenter=true&width=800&height=70&lines=LeetCode+Companion+%E2%80%94+Chrome+Extension" alt="LeetCode Companion — Chrome Extension" />
   </a>
   <br />
   <p><strong>⚡ Protect your LeetCode streak, get step-by-step AI guidance, and auto-sync solutions to GitHub — all in one extension.</strong></p>
