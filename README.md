@@ -25,7 +25,7 @@
 
   <br />
 
-  <img src="assets/screenshots/hero-banner.png" alt="LeetCode Companion Preview" width="700" />
+  <img src="assets/screenshots/hero-banner.png" alt="LeetCode Companion Preview" width="560" />
 
 </div>
 
