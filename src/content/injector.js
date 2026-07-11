@@ -643,9 +643,11 @@
     }
 
     function loadDbStreakSettings() {
-      chrome.storage.local.get(['streakProtection', 'scheduledTime'], (data) => {
-        const isEnabled = data.streakProtection === true;
-        const timeStr = data.scheduledTime || '23:00';
+      chrome.storage.sync.get(['streakProtect', 'streakProtectHour', 'streakProtectMinute', 'streakProtectAmPm'], (data) => {
+        const isEnabled = data.streakProtect === true;
+        const hour = data.streakProtectHour || '10';
+        const min  = data.streakProtectMinute !== undefined ? data.streakProtectMinute : '00';
+        const ampm = data.streakProtectAmPm  || 'PM';
         
         const toggleVal = document.getElementById('lc-db-toggle-streak');
         const hourSelect = document.getElementById('lc-db-hour');
@@ -661,15 +663,12 @@
         }
         
         if (statusText) {
-          statusText.textContent = isEnabled ? `Auto-solve active at ${timeStr}` : 'Automated protection disabled';
+          statusText.textContent = isEnabled 
+            ? `Auto-solve active at ${hour}:${String(min).padStart(2, '0')} ${ampm}` 
+            : 'Automated protection disabled';
         }
         
-        const [hour24, min] = timeStr.split(':').map(Number);
-        let h12 = hour24 % 12;
-        if (h12 === 0) h12 = 12;
-        const ampm = hour24 >= 12 ? 'PM' : 'AM';
-        
-        if (hourSelect) hourSelect.value = String(h12).padStart(2, '0');
+        if (hourSelect) hourSelect.value = String(hour).padStart(2, '0');
         if (minInput) minInput.value = String(min).padStart(2, '0');
         if (ampmSelect) ampmSelect.value = ampm;
       });
@@ -682,7 +681,7 @@
       const ampmSelect = document.getElementById('lc-db-ampm');
       
       const isEnabled = toggleVal ? toggleVal.checked : false;
-      const h12 = parseInt(hourSelect ? hourSelect.value : '11', 10);
+      const hour = hourSelect ? hourSelect.value : '10';
       let minStr = minInput ? minInput.value.trim() : '00';
       const ampm = ampmSelect ? ampmSelect.value : 'PM';
       
@@ -691,14 +690,11 @@
       minStr = String(min).padStart(2, '0');
       if (minInput) minInput.value = minStr;
       
-      let h24 = h12;
-      if (ampm === 'PM' && h12 !== 12) h24 += 12;
-      if (ampm === 'AM' && h12 === 12) h24 = 0;
-      const timeStr = `${String(h24).padStart(2, '0')}:${minStr}`;
-      
-      chrome.storage.local.set({
-        streakProtection: isEnabled,
-        scheduledTime: timeStr
+      chrome.storage.sync.set({
+        streakProtect: isEnabled,
+        streakProtectHour: hour,
+        streakProtectMinute: minStr,
+        streakProtectAmPm: ampm
       }, () => {
         chrome.runtime.sendMessage({ type: 'UPDATE_ALARM' }, () => {
           const saveBtn = document.getElementById('lc-db-save-time');
@@ -1725,6 +1721,18 @@
         setTimeout(() => {
           doAutoSolveLoop();
         }, 3000);
+      }
+    // Real-time synchronization when settings or stats change elsewhere
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'sync') {
+        if (changes.streakProtect || changes.streakProtectHour || changes.streakProtectMinute || changes.streakProtectAmPm) {
+          loadDbStreakSettings();
+        }
+      }
+      if (area === 'local') {
+        if (changes.stats || changes.streak) {
+          loadDbStats();
+        }
       }
     });
   }

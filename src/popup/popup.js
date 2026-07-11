@@ -249,11 +249,15 @@ async function init() {
     });
   });
 
-  // Live-update stats when storage changes (background just synced)
+  // Live-update stats and settings when storage changes (dashboard or background just synced)
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local') {
-      if (changes.stats)  loadStats();
-      if (changes.streak) loadStats();
+      if (changes.stats || changes.streak)  loadStats();
+    }
+    if (area === 'sync') {
+      if (changes.streakProtect || changes.streakProtectHour || changes.streakProtectMinute || changes.streakProtectAmPm) {
+        loadStreakSettings();
+      }
     }
   });
 }
