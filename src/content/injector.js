@@ -30,7 +30,7 @@
     const el = document.querySelector('[data-track-load="description_content"]')
              || document.querySelector('.question-content')
              || document.querySelector('div[class*="description"]');
-    return el ? el.innerText.slice(0, 2000) : '';
+    return el ? el.innerText.slice(0, 20000) : '';
   }
 
   async function getFullMonacoCode() {
@@ -1616,6 +1616,7 @@
         language:   getLanguage(),
         code,
         slug:       getProblemSlug(),
+        description: getDescription(),
       };
 
       try {

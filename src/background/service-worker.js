@@ -71,11 +71,57 @@ chrome.alarms.get('streak-protection-alarm', alarm => {
 });
 
 // ── ACCEPTED_SUBMISSION ────────────────────────────────────────────────────────
+function htmlToMarkdown(html) {
+  if (!html) return '';
+  let text = html;
+  
+  // Replace basic layout tags
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<p>/gi, '').replace(/<\/p>/gi, '\n\n');
+  
+  // Inline styles / codes
+  text = text.replace(/<strong>/gi, '**').replace(/<\/strong>/gi, '**');
+  text = text.replace(/<b>/gi, '**').replace(/<\/b>/gi, '**');
+  text = text.replace(/<em>/gi, '*').replace(/<\/em>/gi, '*');
+  text = text.replace(/<i>/gi, '*').replace(/<\/i>/gi, '*');
+  text = text.replace(/<code>/gi, '`').replace(/<\/code>/gi, '`');
+  
+  // Lists
+  text = text.replace(/<ul>/gi, '\n').replace(/<\/ul>/gi, '\n');
+  text = text.replace(/<ol>/gi, '\n').replace(/<\/ol>/gi, '\n');
+  text = text.replace(/<li>/gi, '- ').replace(/<\/li>/gi, '\n');
+  
+  // Headers
+  text = text.replace(/<h1>/gi, '# ').replace(/<\/h1>/gi, '\n\n');
+  text = text.replace(/<h2>/gi, '## ').replace(/<\/h2>/gi, '\n\n');
+  text = text.replace(/<h3>/gi, '### ').replace(/<\/h3>/gi, '\n\n');
+  
+  // HTML Entities
+  text = text.replace(/&nbsp;/g, ' ');
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&amp;/g, '&');
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/&apos;/g, "'");
+  
+  // Strip all other remaining HTML tags
+  text = text.replace(/<[^>]+>/g, '');
+  
+  // Compress consecutive empty lines
+  text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+  
+  return text.trim();
+}
+
 function formatCodeWithDescription(code, description, language) {
   if (!description || !description.trim()) return code;
   const ext = (language || 'txt').toLowerCase();
   const isPythonOrRubyOrBash = ['py', 'rb', 'sh', 'pl'].includes(ext);
-  const cleanedDesc = description.replace(/\n\s*\n/g, '\n\n').trim();
+  
+  // If description contains HTML tags, convert it to clean markdown format
+  const parsedDesc = /<[a-z][\s\S]*>/i.test(description) ? htmlToMarkdown(description) : description;
+  const cleanedDesc = parsedDesc.replace(/\n\s*\n/g, '\n\n').trim();
+  
   if (isPythonOrRubyOrBash) {
     return `"""\n${cleanedDesc}\n"""\n\n${code}`.replace(/\r\n/g, '\n');
   } else {
@@ -129,6 +175,9 @@ async function handleAcceptedSubmission(payload, sendResponse) {
         let description = '';
         if (slug) {
           description = await fetchProblemDescription(slug);
+        }
+        if (!description || description.trim().length < 100) {
+          description = payload.description || '';
         }
         const fileContent = formatCodeWithDescription(code, description, language);
 
@@ -197,6 +246,9 @@ async function handleSyncSolution(payload, sendResponse) {
     let description = '';
     if (payload.slug) {
       description = await fetchProblemDescription(payload.slug);
+    }
+    if (!description || description.trim().length < 100) {
+      description = payload.description || '';
     }
     const fileContent = formatCodeWithDescription(payload.code, description, payload.language);
 

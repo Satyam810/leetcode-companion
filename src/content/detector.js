@@ -35,6 +35,13 @@
     return /leetcode\.com\/problems\/[^/]+/.test(location.href);
   }
 
+  function getDescription() {
+    const el = document.querySelector('[data-track-load="description_content"]')
+             || document.querySelector('.question-content')
+             || document.querySelector('div[class*="description"]');
+    return el ? el.innerText.slice(0, 20000) : '';
+  }
+
   function getProblemSlug() {
     const m = location.pathname.match(/\/problems\/([^/]+)/);
     return m ? m[1] : '';
@@ -190,18 +197,19 @@
     
     hasReported = true;
 
-    const title      = getProblemTitle();
-    const difficulty = getDifficulty();
-    const language   = getLanguage();
-    const code       = await getEditorCode();
-    const slug       = getProblemSlug();
+    const title       = getProblemTitle();
+    const difficulty  = getDifficulty();
+    const language    = getLanguage();
+    const code        = await getEditorCode();
+    const slug        = getProblemSlug();
+    const description = getDescription();
 
     console.log('[LC-AI] Accepted detected:', { title, difficulty, language, slug, codeLen: code.length });
 
     // Always update stats
     chrome.runtime.sendMessage({
       type:    'ACCEPTED_SUBMISSION',
-      payload: { title, difficulty, language, code, slug },
+      payload: { title, difficulty, language, code, slug, description },
     }, res => {
       if (chrome.runtime.lastError) {
         console.warn('[LC-AI] Message error:', chrome.runtime.lastError.message);
