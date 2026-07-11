@@ -8,6 +8,7 @@
   let hasReported    = false;   // per-page guard
   let checkInterval  = null;
   let observer       = null;
+  let lastSubmitTime = 0;
 
   // ── Context Check & Cleanup ────────────────────────────────────────────────
   function checkContext() {
@@ -179,6 +180,14 @@
   async function reportAccepted() {
     if (!checkContext()) return;
     if (hasReported) return;
+    
+    // Only report if submit button clicked or keyboard shortcut pressed within the last 120s
+    const timeSinceSubmit = Date.now() - lastSubmitTime;
+    if (timeSinceSubmit > 120000) {
+      console.log('[LC-AI] Skipping accepted report: no recent submit click/shortcut detected (old submission page loaded or tab reloaded).');
+      return;
+    }
+    
     hasReported = true;
 
     const title      = getProblemTitle();
@@ -226,6 +235,26 @@
     if (!isProblemPage() || hasReported) return;
     if (isAccepted()) reportAccepted();
   }
+
+  // ── Track Submit Events (Button Clicks & Keyboard Shortcuts) ────────────────
+  document.addEventListener('click', (e) => {
+    if (!checkContext()) return;
+    const btn = e.target.closest('[data-cy="submit-code-btn"]') || 
+                e.target.closest('button[class*="submit"]') ||
+                (e.target.tagName === 'BUTTON' && e.target.textContent.trim().toLowerCase().includes('submit'));
+    if (btn) {
+      lastSubmitTime = Date.now();
+      console.log('[LC-AI] Submit click detected at:', lastSubmitTime);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!checkContext()) return;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      lastSubmitTime = Date.now();
+      console.log('[LC-AI] Submit keydown shortcut (Ctrl/Cmd+Enter) detected at:', lastSubmitTime);
+    }
+  });
 
   // ── Observe DOM mutations (catches SPA navigations + result rendering) ─────
   observer = new MutationObserver(() => {
