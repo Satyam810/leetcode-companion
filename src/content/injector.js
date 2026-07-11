@@ -719,15 +719,17 @@
         testBtn.textContent = 'Testing...';
       }
       
-      chrome.runtime.sendMessage({ type: 'RUN_TEST_TRIGGER' }, (res) => {
+      chrome.runtime.sendMessage({ type: 'FORCE_RUN_AUTO_SOLVE' }, (res) => {
         if (testBtn) {
           testBtn.disabled = false;
           testBtn.textContent = 'Test Trigger';
         }
         if (res && res.success) {
-          sub.textContent = 'Test triggered successfully!';
+          const sub = document.getElementById('lc-db-streak-status');
+          if (sub) sub.textContent = 'Test triggered successfully!';
         } else {
-          sub.textContent = 'Test trigger failed.';
+          const sub = document.getElementById('lc-db-streak-status');
+          if (sub) sub.textContent = 'Test trigger failed.';
         }
       });
     }
