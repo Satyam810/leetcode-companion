@@ -327,10 +327,17 @@ async function fetchLeetCodeStats() {
         query: `query globalCurrentUserData { userStatus { username isSignedIn } }`
       })
     });
-    if (!statusRes.ok) return null;
+    if (!statusRes.ok) {
+      await new Promise(resolve => chrome.storage.local.set({ sessionExpired: true }, resolve));
+      return null;
+    }
     const statusData = await statusRes.json();
     const { username, isSignedIn } = statusData.data?.userStatus || {};
-    if (!isSignedIn || !username) return null;
+    if (!isSignedIn || !username) {
+      await new Promise(resolve => chrome.storage.local.set({ sessionExpired: true }, resolve));
+      return null;
+    }
+    await new Promise(resolve => chrome.storage.local.set({ sessionExpired: false }, resolve));
 
     const statsRes = await fetch('https://leetcode.com/graphql', {
       method: 'POST',

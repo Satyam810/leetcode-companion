@@ -181,6 +181,11 @@ async function init() {
   // Try to sync real statistics from LeetCode
   chrome.runtime.sendMessage({ type: 'SYNC_LEETCODE_STATS' }, () => {
     loadStats();
+    chrome.storage.local.get(['sessionExpired'], (data) => {
+      if (data.sessionExpired) {
+        setStatus({ active: false, text: '⚠️ Session Expired!', sub: 'Please sign in to leetcode.com first.' });
+      }
+    });
   });
 
   $('btn-settings').addEventListener('click', openSettings);
@@ -192,6 +197,11 @@ async function init() {
       btn.style.transform = 'none';
       btn.style.transition = 'none';
       loadStats();
+      chrome.storage.local.get(['sessionExpired'], (data) => {
+        if (data.sessionExpired) {
+          setStatus({ active: false, text: '⚠️ Session Expired!', sub: 'Please sign in to leetcode.com first.' });
+        }
+      });
     });
   });
   $('btn-toggle-sidebar').addEventListener('click', handleToggleSidebar);

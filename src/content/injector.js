@@ -119,18 +119,61 @@
   // ── Create sidebar ────────────────────────────────────────────────────────
   const STYLE = `
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    
+    #lc-companion-root {
+      --lc-bg-main: rgba(15, 17, 23, 0.97);
+      --lc-bg-header: #151824;
+      --lc-bg-card: #1e2235;
+      --lc-border-color: rgba(255, 255, 255, 0.08);
+      --lc-border: 1px solid var(--lc-border-color);
+      --lc-border-focus: #6c63ff;
+      --lc-text-primary: #fff;
+      --lc-text-secondary: #e8eaf6;
+      --lc-text-muted: #9094b4;
+      --lc-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+      --lc-header-border: #2d3154;
+      --lc-bg-tab: #11131c;
+      --lc-bg-tab-hover: rgba(255, 255, 255, 0.02);
+      --lc-bg-tab-active: rgba(129, 140, 248, 0.03);
+      --lc-card-glow: rgba(129, 140, 248, 0.08);
+      --lc-card-border-glow: rgba(129, 140, 248, 0.18);
+      --lc-card-hover-border: rgba(129, 140, 248, 0.3);
+      --lc-card-hover-shadow: rgba(0, 0, 0, 0.25);
+    }
+
+    #lc-companion-root.theme-light {
+      --lc-bg-main: rgba(248, 250, 252, 0.98);
+      --lc-bg-header: #f1f5f9;
+      --lc-bg-card: #ffffff;
+      --lc-border-color: rgba(15, 23, 42, 0.08);
+      --lc-border: 1px solid var(--lc-border-color);
+      --lc-border-focus: #4f46e5;
+      --lc-text-primary: #0f172a;
+      --lc-text-secondary: #334155;
+      --lc-text-muted: #64748b;
+      --lc-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+      --lc-header-border: #cbd5e1;
+      --lc-bg-tab: #e2e8f0;
+      --lc-bg-tab-hover: rgba(15, 23, 42, 0.03);
+      --lc-bg-tab-active: rgba(79, 70, 229, 0.04);
+      --lc-card-glow: rgba(79, 70, 229, 0.02);
+      --lc-card-border-glow: rgba(79, 70, 229, 0.12);
+      --lc-card-hover-border: rgba(79, 70, 229, 0.32);
+      --lc-card-hover-shadow: rgba(15, 23, 42, 0.04);
+    }
+
     #lc-companion-root * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
     #lc-companion-panel {
       position: fixed; right: 20px; top: 75px;
       width: 380px; height: 600px;
       max-height: calc(100vh - 120px);
-      background: rgba(15, 17, 23, 0.97); border: 1px solid rgba(255,255,255,0.08);
+      background: var(--lc-bg-main); border: var(--lc-border);
       border-radius: 16px;
       backdrop-filter: blur(16px);
       display: flex; flex-direction: column;
       z-index: 9999; overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+      box-shadow: var(--lc-shadow);
       transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       opacity: 0;
       transform: translateY(10px) scale(0.98);
@@ -143,9 +186,9 @@
     }
 
     #lc-panel-header {
-      padding: 16px 18px; border-bottom: 1px solid #2d3154;
+      padding: 16px 18px; border-bottom: 1px solid var(--lc-header-border);
       display: flex; align-items: center; gap: 12px;
-      background: #151824; flex-shrink: 0;
+      background: var(--lc-bg-header); flex-shrink: 0;
       cursor: grab;
       user-select: none;
     }
@@ -160,44 +203,44 @@
       box-shadow: 0 4px 10px rgba(108,99,255,0.3);
     }
     .lc-panel-title {
-      font-weight: 700; font-size: 13.5px; color: #fff; white-space: nowrap;
+      font-weight: 700; font-size: 13.5px; color: var(--lc-text-primary); white-space: nowrap;
     }
-    .lc-panel-sub { font-size: 10.5px; color: #9094b4; margin-top: 1px; }
+    .lc-panel-sub { font-size: 10.5px; color: var(--lc-text-muted); margin-top: 1px; }
     #lc-panel-close {
-      margin-left: auto; background: none; border: none; color: #9094b4;
+      margin-left: auto; background: none; border: none; color: var(--lc-text-muted);
       cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px;
       border-radius: 6px; transition: background .2s, color .2s;
     }
-    #lc-panel-close:hover { background: rgba(255,255,255,.07); color: #fff; }
+    #lc-panel-close:hover { background: var(--lc-bg-tab-hover); color: var(--lc-text-primary); }
 
     #lc-panel-content {
       flex: 1; overflow-y: auto; padding: 16px 18px;
-      color: #e8eaf6; font-size: 13.5px; line-height: 1.7;
+      color: var(--lc-text-secondary); font-size: 13.5px; line-height: 1.7;
     }
     #lc-panel-content::-webkit-scrollbar { width: 6px; }
     #lc-panel-content::-webkit-scrollbar-track { background: transparent; }
-    #lc-panel-content::-webkit-scrollbar-thumb { background: #2d3154; border-radius: 4px; }
-    #lc-panel-content::-webkit-scrollbar-thumb:hover { background: #6c63ff; }
+    #lc-panel-content::-webkit-scrollbar-thumb { background: var(--lc-header-border); border-radius: 4px; }
+    #lc-panel-content::-webkit-scrollbar-thumb:hover { background: var(--lc-border-focus); }
 
     #lc-panel-content h1, #lc-panel-content h2, #lc-panel-content h3 {
-      color: #b0aaff; margin: 18px 0 8px; font-size: 13.5px;
+      color: var(--lc-border-focus); margin: 18px 0 8px; font-size: 13.5px;
       font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
-      border-bottom: 1px solid rgba(45, 49, 84, 0.5); padding-bottom: 4px;
+      border-bottom: 1px solid var(--lc-header-border); padding-bottom: 4px;
     }
-    #lc-panel-content p { margin-bottom: 12px; color: #c8cae6; text-align: justify; }
-    #lc-panel-content ul, #lc-panel-content ol { padding-left: 20px; margin-bottom: 12px; color: #c8cae6; }
+    #lc-panel-content p { margin-bottom: 12px; color: var(--lc-text-secondary); text-align: justify; }
+    #lc-panel-content ul, #lc-panel-content ol { padding-left: 20px; margin-bottom: 12px; color: var(--lc-text-secondary); }
     #lc-panel-content li { margin-bottom: 6px; }
-    #lc-panel-content strong { color: #fff; font-weight: 600; }
+    #lc-panel-content strong { color: var(--lc-text-primary); font-weight: 600; }
 
     .lc-inline-code {
-      background: #1e2235; color: #ff79c6; border: 1px solid #2d3154;
+      background: var(--lc-bg-card); color: #ff79c6; border: var(--lc-border);
       padding: 2px 6px; border-radius: 5px; font-family: monospace; font-size: 12px;
     }
 
     #lc-panel-actions {
-      padding: 14px 18px; border-top: 1px solid #2d3154;
+      padding: 14px 18px; border-top: 1px solid var(--lc-header-border);
       display: flex; gap: 10px; flex-shrink: 0;
-      background: #151824;
+      background: var(--lc-bg-header);
     }
     .lc-btn {
       flex: 1; padding: 10px 14px; border-radius: 10px; border: none;
@@ -213,9 +256,9 @@
       box-shadow: 0 4px 15px rgba(108,99,255,.4);
     }
     .lc-btn-secondary {
-      background: #1e2235; border: 1px solid #2d3154; color: #e8eaf6;
+      background: var(--lc-bg-card); border: var(--lc-border); color: var(--lc-text-secondary);
     }
-    .lc-btn-secondary:hover { border-color: #6c63ff; color: #fff; }
+    .lc-btn-secondary:hover { border-color: var(--lc-border-focus); color: var(--lc-text-primary); }
     .lc-btn-warn {
       background: linear-gradient(135deg, #f59e0b, #d97706);
       color: #fff;
@@ -232,7 +275,7 @@
     .lc-alert-info{ background: rgba(108,99,255,.08);  border: 1px solid rgba(108,99,255,.3);  color: #a5a0ff; }
 
     .lc-spinner {
-      width: 28px; height: 28px; border: 3px solid #2d3154;
+      width: 28px; height: 28px; border: 3px solid var(--lc-header-border);
       border-top-color: #6c63ff; border-radius: 50%;
       animation: lc-spin .7s linear infinite; margin: 0 auto 12px;
     }
@@ -276,20 +319,20 @@
 
     /* ── Chat Input Bar ──────────────────────────────────── */
     #lc-chat-bar {
-      padding: 10px 14px; border-top: 1px solid #2d3154;
-      background: #151824; flex-shrink: 0;
+      padding: 10px 14px; border-top: 1px solid var(--lc-header-border);
+      background: var(--lc-bg-header); flex-shrink: 0;
       display: none;
     }
     #lc-chat-bar.active { display: flex; gap: 8px; align-items: center; }
     #lc-chat-input {
-      flex: 1; background: #1e2235; border: 1px solid #2d3154;
-      border-radius: 10px; padding: 9px 14px; color: #e8eaf6;
+      flex: 1; background: var(--lc-bg-card); border: var(--lc-border);
+      border-radius: 10px; padding: 9px 14px; color: var(--lc-text-secondary);
       font-size: 12.5px; font-family: 'Inter', sans-serif;
       outline: none; transition: border-color .2s;
       resize: none; min-height: 36px; max-height: 80px;
     }
-    #lc-chat-input:focus { border-color: #6c63ff; }
-    #lc-chat-input::placeholder { color: #5c607d; }
+    #lc-chat-input:focus { border-color: var(--lc-border-focus); }
+    #lc-chat-input::placeholder { color: var(--lc-text-muted); }
     #lc-chat-send {
       width: 36px; height: 36px; border-radius: 10px; border: none;
       background: linear-gradient(135deg, #6c63ff, #9c63ff);
@@ -318,22 +361,22 @@
       box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
     }
     .lc-chat-msg.ai {
-      background: rgba(30, 34, 53, 0.4); border: 1px solid rgba(255, 255, 255, 0.05);
-      color: #e2e4f0; border-bottom-left-radius: 4px;
+      background: var(--lc-bg-card); border: var(--lc-border);
+      color: var(--lc-text-secondary); border-bottom-left-radius: 4px;
       backdrop-filter: blur(8px);
     }
     .lc-chat-msg.ai h1, .lc-chat-msg.ai h2, .lc-chat-msg.ai h3 {
-      color: #b0aaff; margin: 12px 0 6px; font-size: 12.5px;
+      color: var(--lc-border-focus); margin: 12px 0 6px; font-size: 12.5px;
       font-weight: 600; text-transform: uppercase; letter-spacing: .4px;
-      border-bottom: 1px solid rgba(45,49,84,.5); padding-bottom: 3px;
+      border-bottom: 1px solid var(--lc-header-border); padding-bottom: 3px;
     }
     .lc-chat-msg.ai p { margin-bottom: 8px; }
     .lc-chat-msg.ai ul, .lc-chat-msg.ai ol { padding-left: 18px; margin-bottom: 8px; }
     .lc-chat-msg.ai li { margin-bottom: 4px; }
-    .lc-chat-msg.ai strong { color: #fff; }
+    .lc-chat-msg.ai strong { color: var(--lc-text-primary); }
     .lc-chat-label {
       font-size: 9.5px; text-transform: uppercase; letter-spacing: .6px;
-      color: #5c607d; margin-bottom: 3px; font-weight: 600;
+      color: var(--lc-text-muted); margin-bottom: 3px; font-weight: 600;
     }
     .lc-chat-label.user-label { text-align: right; }
 
@@ -346,22 +389,21 @@
     }
     .lc-typing-dot:nth-child(2) { animation-delay: .15s; }
     .lc-typing-dot:nth-child(3) { animation-delay: .3s; }
-    }
 
     /* ── Tab Layout ──────────────────────────────────────── */
     .lc-tabs {
-      display: flex; border-bottom: 1px solid rgba(255,255,255,0.06); background: #11131c; flex-shrink: 0;
+      display: flex; border-bottom: 1px solid var(--lc-border-color); background: var(--lc-bg-tab); flex-shrink: 0;
     }
     .lc-tab-btn {
-      flex: 1; padding: 12px; background: none; border: none; color: #9094b4;
+      flex: 1; padding: 12px; background: none; border: none; color: var(--lc-text-muted);
       font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.2s;
       border-bottom: 2px solid transparent;
     }
     .lc-tab-btn.active {
-      color: #818cf8; border-bottom-color: #818cf8; background: rgba(129, 140, 248, 0.03);
+      color: var(--lc-border-focus); border-bottom-color: var(--lc-border-focus); background: var(--lc-bg-tab-active);
     }
     .lc-tab-btn:hover:not(.active) {
-      color: #fff; background: rgba(255,255,255,0.02);
+      color: var(--lc-text-primary); background: var(--lc-bg-tab-hover);
     }
     
     /* ── Stats Card Layout ───────────────────────────────── */
@@ -369,41 +411,41 @@
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;
     }
     .lc-stat-card {
-      background: linear-gradient(135deg, rgba(30, 34, 53, 0.6) 0%, rgba(21, 23, 33, 0.8) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: var(--lc-bg-card);
+      border: var(--lc-border);
       border-radius: 12px; padding: 12px; text-align: center;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .lc-stat-card:hover {
-      transform: translateY(-2px); border-color: rgba(129, 140, 248, 0.3);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      transform: translateY(-2px); border-color: var(--lc-card-hover-border);
+      box-shadow: 0 4px 12px var(--lc-card-hover-shadow);
     }
     .lc-stat-card:last-child {
-      background: linear-gradient(135deg, rgba(129, 140, 248, 0.08) 0%, rgba(21, 23, 33, 0.8) 100%);
-      border-color: rgba(129, 140, 248, 0.18);
+      background: var(--lc-card-glow);
+      border-color: var(--lc-card-border-glow);
     }
     .lc-stat-card:last-child:hover {
-      border-color: rgba(129, 140, 248, 0.45);
+      border-color: var(--lc-card-hover-border);
     }
     .lc-stat-value { font-size: 20px; font-weight: 700; line-height: 1.1; }
     .lc-stat-value.easy { color: #34d399; }
     .lc-stat-value.medium { color: #fbbf24; }
     .lc-stat-value.hard { color: #f87171; }
     .lc-stat-value.streak { color: #818cf8; }
-    .lc-stat-label { font-size: 9px; color: #9094b4; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .lc-stat-sub { font-size: 9px; color: #5c607d; margin-top: 2px; }
+    .lc-stat-label { font-size: 9px; color: var(--lc-text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .lc-stat-sub { font-size: 9px; color: var(--lc-text-muted); margin-top: 2px; }
 
     /* ── Action Rows ─────────────────────────────────────── */
     .lc-sidebar-action-btn {
       display: flex; align-items: center; gap: 12px;
-      background: linear-gradient(135deg, rgba(30, 34, 53, 0.6) 0%, rgba(21, 23, 33, 0.7) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: var(--lc-bg-card);
+      border: var(--lc-border);
       border-radius: 12px; padding: 10px 12px; cursor: pointer;
       transition: all 0.25s ease; text-align: left; width: 100%;
     }
     .lc-sidebar-action-btn:hover {
-      border-color: rgba(129, 140, 248, 0.35);
-      background: rgba(129, 140, 248, 0.06);
+      border-color: var(--lc-card-hover-border);
+      background: var(--lc-bg-tab-active);
       transform: translateX(2px);
     }
     .lc-action-icon {
@@ -413,22 +455,22 @@
     }
     .lc-action-icon.yellow { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
     .lc-action-icon.green { background: rgba(52, 211, 153, 0.12); color: #34d399; }
-    .lc-action-text strong { display: block; font-size: 12.5px; font-weight: 600; color: #fff; }
-    .lc-action-text span { display: block; font-size: 10px; color: #9094b4; margin-top: 1px; }
+    .lc-action-text strong { display: block; font-size: 12.5px; font-weight: 600; color: var(--lc-text-primary); }
+    .lc-action-text span { display: block; font-size: 10px; color: var(--lc-text-muted); margin-top: 1px; }
 
     /* ── Streak Protection Card ────────────────────────── */
     .lc-sidebar-card {
-      background: linear-gradient(135deg, rgba(30, 34, 53, 0.5) 0%, rgba(21, 23, 33, 0.6) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: var(--lc-bg-card);
+      border: var(--lc-border);
       border-radius: 14px; padding: 14px; margin-bottom: 16px;
     }
     .lc-sidebar-card.enabled {
-      border-color: rgba(129, 140, 248, 0.22);
-      background: linear-gradient(135deg, rgba(129, 140, 248, 0.03) 0%, rgba(21, 23, 33, 0.7) 100%);
+      border-color: var(--lc-card-border-glow);
+      background: var(--lc-card-glow);
     }
     .lc-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .lc-card-title { font-weight: 600; font-size: 13px; color: #fff; }
-    .lc-card-sub { font-size: 10.5px; color: #9094b4; margin-top: 1px; }
+    .lc-card-title { font-weight: 600; font-size: 13px; color: var(--lc-text-primary); }
+    .lc-card-sub { font-size: 10.5px; color: var(--lc-text-muted); margin-top: 1px; }
     
     .lc-switch { position: relative; display: inline-block; width: 34px; height: 18px; margin-left: auto; }
     .lc-switch input { opacity: 0; width: 0; height: 0; }
@@ -439,15 +481,15 @@
 
     .lc-time-picker {
       display: flex; align-items: center; gap: 6px;
-      padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);
+      padding-top: 10px; border-top: var(--lc-border);
       margin-top: 10px;
     }
     .lc-time-select, .lc-time-input {
-      background: #0f111a; border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 6px; padding: 4px 6px; color: #fff;
+      background: var(--lc-bg-main); border: var(--lc-border);
+      border-radius: 6px; padding: 4px 6px; color: var(--lc-text-primary);
       font-size: 11.5px; font-weight: 600; text-align: center; outline: none;
     }
-    .lc-time-select:focus, .lc-time-input:focus { border-color: #818cf8; }
+    .lc-time-select:focus, .lc-time-input:focus { border-color: var(--lc-border-focus); }
     .lc-time-select { width: 50px; }
     .lc-time-input { width: 38px; }
     .lc-time-ampm { width: 50px; }
@@ -459,8 +501,8 @@
       transition: all 0.2s;
     }
     .lc-action-btn.primary { background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%); color: #fff; }
-    .lc-action-btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #c8cae6; }
-    .lc-action-btn.secondary:hover { background: rgba(255,255,255,0.02); color: #fff; }
+    .lc-action-btn.secondary { background: transparent; border: var(--lc-border); color: var(--lc-text-muted); }
+    .lc-action-btn.secondary:hover { background: var(--lc-bg-tab-hover); color: var(--lc-text-primary); }
   `;
 
   function injectStyles() {
@@ -1013,6 +1055,46 @@
       (document.head || document.documentElement).appendChild(script);
     }
 
+    function isUserLoggedIn() {
+      const avatar = document.querySelector('#navbar_user_avatar') || 
+                     document.querySelector('[class*="avatar"]') || 
+                     document.querySelector('[class*="profile"] img') ||
+                     document.querySelector('.avatar-input-wrapper') ||
+                     document.querySelector('[class*="UserMenu"]') ||
+                     document.querySelector('[class*="user-menu"]');
+      const signInLink = document.querySelector('a[href*="/accounts/login"]') || 
+                         document.querySelector('a[href*="/login"]');
+      if (signInLink && !avatar) {
+        return false;
+      }
+      return true;
+    }
+
+    function updateThemeClass() {
+      const root = document.getElementById('lc-companion-root');
+      if (!root) return;
+      
+      const isDark = document.documentElement.classList.contains('dark') || 
+                     document.body.classList.contains('dark') ||
+                     document.documentElement.getAttribute('data-theme') === 'dark' ||
+                     localStorage.getItem('theme') === 'dark';
+      
+      if (isDark) {
+        root.classList.remove('theme-light');
+      } else {
+        root.classList.add('theme-light');
+      }
+    }
+
+    function observeTheme() {
+      updateThemeClass();
+      const observer = new MutationObserver(() => {
+        updateThemeClass();
+      });
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+      observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+
     function setContent(html) { content.innerHTML = html; }
     function loading(msg = 'Working…') {
       setContent(`<div style="text-align:center;padding:36px 16px;color:#9094b4;">
@@ -1245,6 +1327,23 @@
     async function doAutoSolveLoop() {
       if (!checkContext()) return;
       openPanel();
+      
+      if (!isUserLoggedIn()) {
+        setContent(`
+          <div class="lc-alert lc-alert-err" style="padding: 16px; border-radius: 12px; background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.25);">
+            <div style="font-size: 14px; font-weight: 700; margin-bottom: 6px; color: #f87171;">❌ Session Expired</div>
+            <div style="font-size: 12px; line-height: 1.5; color: #fca5a5;">
+              You are currently signed out of LeetCode. Please sign in to LeetCode to protect your streak and auto-sync solutions!
+            </div>
+            <a href="/accounts/login/" class="lc-btn lc-btn-primary" style="display: flex; margin-top: 14px; text-decoration: none; font-size: 12px; height: 36px; align-items: center; justify-content: center;">
+              Sign In to LeetCode
+            </a>
+          </div>
+        `);
+        chatBar.classList.remove('active');
+        return;
+      }
+
       autoSolveAttempt = 0;
       lastErrorDetails = '';
       runAutoSolveIteration();
@@ -1744,6 +1843,7 @@
   // ── Init ──────────────────────────────────────────────────────────────────
   injectStyles();
   createSidebar();
+  observeTheme();
   setupListeners();
 
   console.log('[LC-Companion] injector.js loaded');
