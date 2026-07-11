@@ -7,7 +7,7 @@
     <img src="https://readme-typing-svg.demolab.com?font=Outfit&size=30&duration=4000&pause=3000&color=209ced&center=true&vCenter=true&width=800&height=70&lines=LeetCode+Companion+%E2%80%94+Chrome+Extension" alt="LeetCode Companion — Chrome Extension" />
   </a>
   <br />
-  <p><strong>⚡ Auto-solve challenges, get step-by-step AI hints, and sync code to GitHub.</strong></p>
+  <p><strong>⚡ Auto-solve LeetCode challenges to protect your streak, get AI hints, and sync code to GitHub.</strong></p>
 
   <p>
     <a href="https://chrome.google.com/webstore"><img src="https://img.shields.io/badge/Chrome_Web_Store-v1.0.0-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Web Store" /></a>
