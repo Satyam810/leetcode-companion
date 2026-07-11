@@ -2,8 +2,11 @@
 
   <img src="assets/icons/icon128.png" alt="LeetCode Companion Logo" width="80" height="80" />
 
-  # LeetCode Companion
-
+  <br />
+  <a href="https://git.io/typing-svg">
+    <img src="https://readme-typing-svg.demolab.com?font=Outfit&size=34&duration=4000&pause=2000&color=6366F1&center=true&vCenter=true&width=600&height=70&lines=LeetCode+Companion+%E2%80%94+Chrome+Extension;Auto-Solve%2C+AI+Hints+%26+GitHub+Sync" alt="LeetCode Companion — Chrome Extension" />
+  </a>
+  <br />
   ### The Ultimate Chrome Extension to Protect Your Streak — featuring Auto-Solve, AI-Powered Hints, and Seamless GitHub Sync.
 
   <p>
