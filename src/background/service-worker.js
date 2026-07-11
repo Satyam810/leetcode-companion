@@ -339,6 +339,9 @@ async function fetchLeetCodeStats() {
       body: JSON.stringify({
         query: `query userSessionProgress($username: String!) {
           matchedUser(username: $username) {
+            userCalendar {
+              streak
+            }
             submitStats {
               acSubmissionNum {
                 difficulty
@@ -362,8 +365,23 @@ async function fetchLeetCodeStats() {
       else if (diff === 'hard') stats.hard = item.count;
     }
 
+    const calendar = statsData.data?.matchedUser?.userCalendar || {};
+    const streakVal = calendar.streak || 0;
+
+    const currentStreak = await new Promise(resolve => {
+      chrome.storage.local.get(['streak'], data => {
+        resolve(data.streak || { current: 0, longest: 0, lastSolvedDate: null });
+      });
+    });
+
+    const streak = {
+      current: streakVal,
+      longest: Math.max(streakVal, currentStreak.longest || 0),
+      lastSolvedDate: new Date().toISOString().slice(0, 10)
+    };
+
     await new Promise(resolve => {
-      chrome.storage.local.set({ stats }, resolve);
+      chrome.storage.local.set({ stats, streak }, resolve);
     });
 
     return stats;
@@ -423,10 +441,14 @@ async function handleAutoSolveSuccess(payload, sendResponse) {
     });
 
     const localData = await new Promise(resolve => {
-      chrome.storage.local.get(['activeAutoSolveTabId'], resolve);
+      chrome.storage.local.get(['activeAutoSolveTabId', 'isManualTest'], resolve);
     });
 
-    if (localData.activeAutoSolveTabId) {
+    if (localData.isManualTest) {
+      console.log('[LC-Companion SW] Manual test trigger auto-solve succeeded. Leaving tab open.');
+      chrome.storage.local.remove(['isManualTest', 'activeAutoSolveTabId']);
+    } else if (localData.activeAutoSolveTabId) {
+      console.log('[LC-Companion SW] Alarm auto-solve succeeded. Closing background tab.');
       chrome.tabs.remove(localData.activeAutoSolveTabId, () => {
         if (chrome.runtime.lastError) {
           console.warn('[LC-Companion SW] Error closing tab:', chrome.runtime.lastError.message);
@@ -574,7 +596,7 @@ async function runAutoSolveImmediately() {
     }
     console.log('[LC-Companion SW] Manual test trigger: Opening challenge in new tab:', daily.titleSlug);
     return new Promise(resolve => {
-      chrome.storage.local.set({ autoSolveSlug: daily.titleSlug }, () => {
+      chrome.storage.local.set({ autoSolveSlug: daily.titleSlug, isManualTest: true }, () => {
         chrome.tabs.create({
           url: `https://leetcode.com/problems/${daily.titleSlug}/`,
           active: true

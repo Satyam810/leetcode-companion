@@ -89,16 +89,34 @@
     /* ── Status Banner ───────────────────────────── */
     #status-banner {
       margin: 14px 18px 0;
-      padding: 11px 14px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, rgba(22, 25, 38, 0.7) 0%, rgba(16, 18, 26, 0.8) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
       display: flex; align-items: center; gap: 12px;
       font-size: 12.5px;
-      transition: all .2s;
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      transition: all 0.3s ease;
     }
-    #status-banner.active { border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.02); }
-    #status-banner.inactive { border-color: var(--border); }
+    #status-banner.active {
+      border-color: rgba(52, 211, 153, 0.35);
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.04) 0%, rgba(16, 18, 26, 0.8) 100%);
+      box-shadow: 0 4px 16px rgba(52, 211, 153, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    }
+    #status-banner.inactive {
+      border-color: rgba(255, 255, 255, 0.05);
+    }
+    #status-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 270px;
+      display: block;
+    }
     
     .status-dot {
       width: 8px; height: 8px; border-radius: 50%;
@@ -445,7 +463,7 @@
     <div class="status-dot grey" id="status-dot"></div>
     <div>
       <div id="status-text" style="font-weight:600; color: var(--text-primary);">Checking LeetCode tab…</div>
-      <div id="status-sub" style="font-size:11px; color: var(--text-muted); margin-top:2px;">Go to leetcode.com/problems/ to start</div>
+      <div id="status-sub">Go to leetcode.com/problems/ to start</div>
     </div>
     <div class="spinner" id="status-spinner"></div>
   </div>

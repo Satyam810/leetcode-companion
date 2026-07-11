@@ -303,21 +303,24 @@
 
     /* ── Chat Messages ───────────────────────────────────── */
     .lc-chat-msg {
-      margin: 8px 0; padding: 10px 14px; border-radius: 12px;
-      font-size: 12.5px; line-height: 1.65; max-width: 92%;
-      animation: lc-msg-in .25s ease;
+      margin: 8px 0; padding: 11px 15px; border-radius: 14px;
+      font-size: 13px; line-height: 1.6; max-width: 88%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      animation: lc-msg-in .28s cubic-bezier(0.4, 0, 0.2, 1);
     }
     @keyframes lc-msg-in {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
     .lc-chat-msg.user {
-      background: linear-gradient(135deg, #6c63ff, #9c63ff);
+      background: linear-gradient(135deg, #6c63ff 0%, #4f46e5 100%);
       color: #fff; margin-left: auto; border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
     }
     .lc-chat-msg.ai {
-      background: #1e2235; border: 1px solid #2d3154;
-      color: #c8cae6; border-bottom-left-radius: 4px;
+      background: rgba(30, 34, 53, 0.4); border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e2e4f0; border-bottom-left-radius: 4px;
+      backdrop-filter: blur(8px);
     }
     .lc-chat-msg.ai h1, .lc-chat-msg.ai h2, .lc-chat-msg.ai h3 {
       color: #b0aaff; margin: 12px 0 6px; font-size: 12.5px;
