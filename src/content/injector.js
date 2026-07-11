@@ -1838,12 +1838,13 @@
         }
       }
     });
+
+    observeTheme();
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────
   injectStyles();
   createSidebar();
-  observeTheme();
   setupListeners();
 
   console.log('[LC-Companion] injector.js loaded');
