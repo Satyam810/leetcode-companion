@@ -367,50 +367,36 @@ async function fetchLeetCodeStats() {
     }
 
     const calendar = statsData.data?.matchedUser?.userCalendar || {};
-    const currentStreakVal = calendar.streak || 0;
-
-    let bestStreakVal = currentStreakVal;
+    const apiMaxStreak = calendar.streak || 0; // The API 'streak' field actually returns the max streak
+    
+    let currentStreakVal = 0;
     try {
       const submissionCalendar = JSON.parse(calendar.submissionCalendar || '{}');
-      const activeDates = new Set();
-      for (const timestamp in submissionCalendar) {
-        if (submissionCalendar[timestamp] > 0) {
-          const date = new Date(parseInt(timestamp, 10) * 1000);
-          const year = date.getUTCFullYear();
-          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-          const day = String(date.getUTCDate()).padStart(2, '0');
-          activeDates.add(`${year}-${month}-${day}`);
-        }
-      }
-
-      // Calculate max streak by sorting dates and counting consecutive days
-      const sortedDates = Array.from(activeDates).sort();
-      let maxStreak = 0;
-      let currentMaxStreak = 0;
-      let prevDate = null;
-
-      for (const dateStr of sortedDates) {
-        const currDate = new Date(`${dateStr}T00:00:00Z`);
-        if (!prevDate) {
-          currentMaxStreak = 1;
-        } else {
-          const diffDays = Math.round((currDate - prevDate) / 86400000);
-          if (diffDays === 1) {
-            currentMaxStreak++;
-          } else if (diffDays > 1) {
-            currentMaxStreak = 1;
-          }
-        }
-        if (currentMaxStreak > maxStreak) {
-          maxStreak = currentMaxStreak;
-        }
-        prevDate = currDate;
-      }
+      const timestamps = Object.keys(submissionCalendar).map(Number);
       
-      bestStreakVal = Math.max(maxStreak, currentStreakVal);
-      console.log('[LC-Companion SW] API current streak:', currentStreakVal, 'Calculated max streak:', bestStreakVal);
+      if (timestamps.length > 0) {
+        // LeetCode operates on UTC days for streak resets. 
+        // 86400 seconds = 1 day.
+        const currentUtcDay = Math.floor(Date.now() / 86400000);
+        const activeDays = new Set(timestamps.map(ts => Math.floor(ts / 86400)));
+        
+        let streak = 0;
+        let dayToCheck = currentUtcDay;
+        
+        // If they haven't submitted today (UTC), their streak is maintained if they submitted yesterday (UTC)
+        if (!activeDays.has(dayToCheck)) {
+          dayToCheck--;
+        }
+        
+        while (activeDays.has(dayToCheck)) {
+          streak++;
+          dayToCheck--;
+        }
+        currentStreakVal = streak;
+      }
+      console.log('[LC-Companion SW] Calculated current streak:', currentStreakVal, 'API max streak:', apiMaxStreak);
     } catch (e) {
-      console.error('[LC-Companion SW] Error calculating max streak:', e);
+      console.error('[LC-Companion SW] Error calculating streaks:', e);
     }
 
     const currentStreak = await new Promise(resolve => {
@@ -421,7 +407,7 @@ async function fetchLeetCodeStats() {
 
     const streak = {
       current: currentStreakVal,
-      longest: Math.max(bestStreakVal, currentStreak.longest || 0),
+      longest: Math.max(apiMaxStreak, currentStreak.longest || 0),
       lastSolvedDate: new Date().toISOString().slice(0, 10)
     };
 
