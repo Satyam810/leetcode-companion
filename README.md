@@ -23,7 +23,7 @@
   </p>
 
   <p>
-    🛡️ <strong>Auto-Solve Streak Protection</strong> &nbsp;·&nbsp; 🤖 <strong>AI-Powered Learning</strong> &nbsp;·&nbsp; 🔄 <strong>Automatic GitHub Sync</strong> &nbsp;·&nbsp; 📊 <strong>Progress Dashboard</strong>
+    🛡️ <strong>Auto-Solve Streak Protection</strong> &nbsp;·&nbsp; 🤖 <strong>AI-Powered Learning</strong> &nbsp;·&nbsp; 🔄 <strong>Automatic GitHub Sync</strong>
   </p>
 
   <br />
