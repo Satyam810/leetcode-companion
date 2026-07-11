@@ -2,9 +2,8 @@
 
   <img src="assets/icons/icon128.png" alt="LeetCode Companion Logo" width="80" height="80" />
 
-  <br />
-  <img src="assets/screenshots/animated-header.svg" alt="LeetCode Companion" width="460" />
-  <br /><br />
+  # LeetCode Companion
+
   ### The Ultimate Chrome Extension to Protect Your Streak — featuring Auto-Solve, AI-Powered Hints, and Seamless GitHub Sync.
 
   <p>
