@@ -1342,6 +1342,7 @@
       if (msg.type === 'AUTO_SOLVE')        { doAutoSolveLoop(); sendResponse({ success: true }); }
       if (msg.type === 'SYNC_TO_GITHUB')   { doSync(); sendResponse({ success: true }); }
       if (msg.type === 'OPEN_SIDEBAR')     { handleToggleFromPopup(); sendResponse({ success: true }); }
+      if (msg.type === 'CLOSE_SIDEBAR')    { closePanel(); sendResponse({ success: true }); }
     });
 
     // Check for auto-solve flag in local storage (resilient to SPA router stripping hash)

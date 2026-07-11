@@ -161,6 +161,10 @@ async function init() {
     setStatus({ active: false, text: 'No active tab', sub: 'Open Chrome and try again' });
   } else if (result.isProblem) {
     setStatus({ active: true,  text: 'LeetCode Problem Detected!', sub: result.tab.title || result.tab.url });
+    // Automatically close page sidebar when popup opens to avoid double-panels on screen
+    chrome.tabs.sendMessage(result.tab.id, { type: 'CLOSE_SIDEBAR' }, () => {
+      if (chrome.runtime.lastError) {}
+    });
   } else if (result.isLeetCode) {
     setStatus({ active: false, text: 'On LeetCode', sub: 'Go to a problem page to use AI features' });
   } else {
