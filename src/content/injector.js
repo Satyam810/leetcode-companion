@@ -666,33 +666,41 @@
     const viewAi = document.getElementById('lc-view-ai');
 
     function loadDbStats() {
-      chrome.storage.local.get(['stats', 'streak'], (data) => {
-        const stats = data.stats || { easy: 0, medium: 0, hard: 0 };
-        const streak = data.streak || { current: 0, longest: 0 };
-        
-        const dbEasy = document.getElementById('lc-db-easy');
-        const dbMedium = document.getElementById('lc-db-medium');
-        const dbHard = document.getElementById('lc-db-hard');
-        const dbStreak = document.getElementById('lc-db-streak');
-        const dbStreakBest = document.getElementById('lc-db-streak-best');
-        
-        if (dbEasy) dbEasy.textContent = stats.easy;
-        if (dbMedium) dbMedium.textContent = stats.medium;
-        if (dbHard) dbHard.textContent = stats.hard;
-        if (dbStreak) dbStreak.textContent = streak.current;
-        if (dbStreakBest) dbStreakBest.textContent = `Best: ${streak.longest}`;
-      });
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime?.id) {
+          chrome.storage.local.get(['stats', 'streak'], (data) => {
+            if (chrome.runtime?.lastError) return;
+            const stats = data.stats || { easy: 0, medium: 0, hard: 0 };
+            const streak = data.streak || { current: 0, longest: 0 };
+            
+            const dbEasy = document.getElementById('lc-db-easy');
+            const dbMedium = document.getElementById('lc-db-medium');
+            const dbHard = document.getElementById('lc-db-hard');
+            const dbStreak = document.getElementById('lc-db-streak');
+            const dbStreakBest = document.getElementById('lc-db-streak-best');
+            
+            if (dbEasy) dbEasy.textContent = stats.easy;
+            if (dbMedium) dbMedium.textContent = stats.medium;
+            if (dbHard) dbHard.textContent = stats.hard;
+            if (dbStreak) dbStreak.textContent = streak.current;
+            if (dbStreakBest) dbStreakBest.textContent = `Best: ${streak.longest}`;
+          });
+        }
+      } catch (err) {}
     }
 
     function loadDbStreakSettings() {
-      chrome.storage.sync.get(['streakProtect', 'streakProtectHour', 'streakProtectMinute', 'streakProtectAmPm'], (data) => {
-        const isEnabled = data.streakProtect === true;
-        const hour = data.streakProtectHour || '10';
-        const min  = data.streakProtectMinute !== undefined ? data.streakProtectMinute : '00';
-        const ampm = data.streakProtectAmPm  || 'PM';
-        
-        const toggleVal = document.getElementById('lc-db-toggle-streak');
-        const hourSelect = document.getElementById('lc-db-hour');
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync && chrome.runtime?.id) {
+          chrome.storage.sync.get(['streakProtect', 'streakProtectHour', 'streakProtectMinute', 'streakProtectAmPm'], (data) => {
+            if (chrome.runtime?.lastError) return;
+            const isEnabled = data.streakProtect === true;
+            const hour = data.streakProtectHour || '10';
+            const min  = data.streakProtectMinute !== undefined ? data.streakProtectMinute : '00';
+            const ampm = data.streakProtectAmPm  || 'PM';
+            
+            const toggleVal = document.getElementById('lc-db-toggle-streak');
+            const hourSelect = document.getElementById('lc-db-hour');
         const minInput = document.getElementById('lc-db-minute');
         const ampmSelect = document.getElementById('lc-db-ampm');
         const card = document.getElementById('lc-db-streak-card');
@@ -713,7 +721,9 @@
         if (hourSelect) hourSelect.value = String(hour).padStart(2, '0');
         if (minInput) minInput.value = String(min).padStart(2, '0');
         if (ampmSelect) ampmSelect.value = ampm;
-      });
+          });
+        }
+      } catch (err) {}
     }
 
     function saveDbSchedule() {
@@ -732,26 +742,32 @@
       minStr = String(min).padStart(2, '0');
       if (minInput) minInput.value = minStr;
       
-      chrome.storage.sync.set({
-        streakProtect: isEnabled,
-        streakProtectHour: hour,
-        streakProtectMinute: minStr,
-        streakProtectAmPm: ampm
-      }, () => {
-        chrome.runtime.sendMessage({ type: 'UPDATE_ALARM' }, () => {
-          const saveBtn = document.getElementById('lc-db-save-time');
-          if (saveBtn) {
-            const originalText = saveBtn.textContent;
-            saveBtn.textContent = 'Saved! ✓';
-            saveBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-            setTimeout(() => {
-              saveBtn.textContent = originalText;
-              saveBtn.style.background = '';
-              loadDbStreakSettings();
-            }, 1500);
-          }
-        });
-      });
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync && chrome.runtime?.id) {
+          chrome.storage.sync.set({
+            streakProtect: isEnabled,
+            streakProtectHour: hour,
+            streakProtectMinute: minStr,
+            streakProtectAmPm: ampm
+          }, () => {
+            if (chrome.runtime?.lastError) return;
+            chrome.runtime.sendMessage({ type: 'UPDATE_ALARM' }, () => {
+              if (chrome.runtime?.lastError) return;
+              const saveBtn = document.getElementById('lc-db-save-time');
+              if (saveBtn) {
+                const originalText = saveBtn.textContent;
+                saveBtn.textContent = 'Saved! ✓';
+                saveBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                setTimeout(() => {
+                  saveBtn.textContent = originalText;
+                  saveBtn.style.background = '';
+                  loadDbStreakSettings();
+                }, 1500);
+              }
+            });
+          });
+        }
+      } catch (err) {}
     }
 
     function runDbTest() {
@@ -806,43 +822,55 @@
     function closePanel() {
       panel.classList.remove('open');
       toggle.style.display = '';
-      chrome.storage.sync.get(['showSidebar'], (data) => {
-        if (data.showSidebar === false) {
-          const root = document.getElementById('lc-companion-root');
-          if (root) {
-            root.style.setProperty('display', 'none', 'important');
-          }
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync && chrome.runtime?.id) {
+          chrome.storage.sync.get(['showSidebar'], (data) => {
+            if (chrome.runtime?.lastError) return;
+            if (data.showSidebar === false) {
+              const root = document.getElementById('lc-companion-root');
+              if (root) {
+                root.style.setProperty('display', 'none', 'important');
+              }
+            }
+          });
         }
-      });
+      } catch (err) {}
     }
 
     function handleToggleFromPopup() {
       const root = document.getElementById('lc-companion-root');
       if (!root || !toggle || !panel) return;
 
-      chrome.storage.sync.get(['showSidebar'], (data) => {
-        const isCurrentlyShown = data.showSidebar !== false;
-        
-        if (isCurrentlyShown) {
-          chrome.storage.sync.set({ showSidebar: false }, () => {
-            root.style.setProperty('display', 'none', 'important');
-            panel.classList.remove('open');
-            toggle.style.display = 'none';
-          });
-        } else {
-          chrome.storage.sync.set({ showSidebar: true }, () => {
-            root.style.setProperty('display', '', 'important');
-            panel.classList.remove('open');
-            toggle.style.display = '';
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync && chrome.runtime?.id) {
+          chrome.storage.sync.get(['showSidebar'], (data) => {
+            if (chrome.runtime?.lastError) return;
+            const isCurrentlyShown = data.showSidebar !== false;
             
-            toggle.style.transition = 'transform 0.15s ease, background 0.15s ease';
-            toggle.style.transform = 'scale(1.35)';
-            setTimeout(() => {
-              toggle.style.transform = 'scale(1)';
-            }, 300);
+            if (isCurrentlyShown) {
+              chrome.storage.sync.set({ showSidebar: false }, () => {
+                if (chrome.runtime?.lastError) return;
+                root.style.setProperty('display', 'none', 'important');
+                panel.classList.remove('open');
+                toggle.style.display = 'none';
+              });
+            } else {
+              chrome.storage.sync.set({ showSidebar: true }, () => {
+                if (chrome.runtime?.lastError) return;
+                root.style.setProperty('display', '', 'important');
+                panel.classList.remove('open');
+                toggle.style.display = '';
+                
+                toggle.style.transition = 'transform 0.15s ease, background 0.15s ease';
+                toggle.style.transform = 'scale(1.35)';
+                setTimeout(() => {
+                  toggle.style.transform = 'scale(1)';
+                }, 300);
+              });
+            }
           });
         }
-      });
+      } catch (err) {}
     }
 
     // Draggable toggle button with edge snapping
@@ -990,20 +1018,29 @@
     });
 
     // Check saved visibility state on tab load
-    chrome.storage.sync.get(['showSidebar'], (data) => {
-      const show = data.showSidebar !== false;
-      const root = document.getElementById('lc-companion-root');
-      if (root) root.style.display = show ? '' : 'none';
-    });
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync && chrome.runtime?.id) {
+        chrome.storage.sync.get(['showSidebar'], (data) => {
+          if (chrome.runtime?.lastError) return;
+          const show = data.showSidebar !== false;
+          const root = document.getElementById('lc-companion-root');
+          if (root) root.style.display = show ? '' : 'none';
+        });
+      }
+    } catch (err) {}
 
     // Listen for storage changes to instantly update visibility
-    chrome.storage.onChanged.addListener((changes, area) => {
-      if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) return;
-      if (area === 'sync' && changes.showSidebar) {
-        const root = document.getElementById('lc-companion-root');
-        if (root) root.style.display = changes.showSidebar.newValue ? '' : 'none';
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged && chrome.runtime?.id) {
+        chrome.storage.onChanged.addListener((changes, area) => {
+          if (chrome.runtime?.lastError) return;
+          if (area === 'sync' && changes.showSidebar) {
+            const root = document.getElementById('lc-companion-root');
+            if (root) root.style.display = changes.showSidebar.newValue ? '' : 'none';
+          }
+        });
       }
-    });
+    } catch (err) {}
 
     // Copy to clipboard delegation
     content.addEventListener('click', (e) => {
@@ -1513,14 +1550,21 @@
         sub.textContent = 'Solved ✓';
         chatBar.classList.add('active');
 
-        chrome.storage.sync.get(['autoSync'], (data) => {
-          if (data.autoSync) {
-            doSync();
+        try {
+          if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync && chrome.runtime?.id) {
+            chrome.storage.sync.get(['autoSync'], (data) => {
+              if (chrome.runtime?.lastError) return;
+              if (data.autoSync) {
+                doSync();
+              }
+            });
           }
-        });
+        } catch (e) {}
 
         try {
-          chrome.runtime.sendMessage({ type: 'AUTO_SOLVE_SUCCESS', payload: { title: getProblemTitle() } });
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+            chrome.runtime.sendMessage({ type: 'AUTO_SOLVE_SUCCESS', payload: { title: getProblemTitle() } });
+          }
         } catch (e) {}
       } else {
         lastErrorDetails = outcome.details || 'Unknown submission error.';
@@ -1836,29 +1880,50 @@
     });
 
     // Check for auto-solve flag in local storage (resilient to SPA router stripping hash)
-    chrome.storage.local.get(['autoSolveSlug'], (data) => {
-      const currentSlug = getProblemSlug();
-      if (data.autoSolveSlug && data.autoSolveSlug === currentSlug) {
-        chrome.storage.local.remove(['autoSolveSlug']);
-        setTimeout(() => {
-          doAutoSolveLoop();
-        }, 3000);
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime?.id) {
+        chrome.storage.local.get(['autoSolveSlug'], (data) => {
+          if (chrome.runtime?.lastError) return;
+          const currentSlug = getProblemSlug();
+          if (data.autoSolveSlug && data.autoSolveSlug === currentSlug) {
+            chrome.storage.local.remove(['autoSolveSlug']);
+            setTimeout(() => {
+              doAutoSolveLoop();
+            }, 3000);
+          }
+        });
       }
-    });
+    } catch (err) {}
 
     // Real-time synchronization when settings or stats change elsewhere
-    chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === 'sync') {
-        if (changes.streakProtect || changes.streakProtectHour || changes.streakProtectMinute || changes.streakProtectAmPm) {
-          loadDbStreakSettings();
-        }
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged && chrome.runtime?.id) {
+        chrome.storage.onChanged.addListener((changes, area) => {
+          if (chrome.runtime?.lastError) return;
+          if (area === 'sync') {
+            if (changes.streakProtect || changes.streakProtectHour || changes.streakProtectMinute || changes.streakProtectAmPm) {
+              loadDbStreakSettings();
+            }
+          }
+          if (area === 'local') {
+            if (changes.stats || changes.streak) {
+              loadDbStats();
+            }
+          }
+        });
       }
-      if (area === 'local') {
-        if (changes.stats || changes.streak) {
+    } catch (err) {}
+
+    // Initial load: activate dashboard and sync LeetCode stats
+    switchTab('dashboard');
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+        chrome.runtime.sendMessage({ type: 'SYNC_LEETCODE_STATS' }, () => {
+          if (chrome.runtime?.lastError) return;
           loadDbStats();
-        }
+        });
       }
-    });
+    } catch (e) {}
 
     observeTheme();
   }
