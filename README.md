@@ -53,15 +53,15 @@ Most extensions only push your code to a repo. That's it. LeetCode Companion is 
 <table>
   <tr>
     <td align="center" width="33%">
-      <h3>Protects</h3>
+      <h3>🛡️ Protects</h3>
       <p>Auto-solves the daily challenge when you can't, so your streak <b>never breaks</b>.</p>
     </td>
     <td align="center" width="33%">
-      <h3>Teaches</h3>
+      <h3>🧠 Teaches</h3>
       <p>AI explains problems step-by-step in a beautiful floating sidebar so you actually <b>learn</b>.</p>
     </td>
     <td align="center" width="33%">
-      <h3>Records</h3>
+      <h3>🔄 Records</h3>
       <p>Every solution auto-syncs to GitHub, building your <b>coding portfolio</b>.</p>
     </td>
   </tr>
@@ -152,22 +152,34 @@ Every synced solution is enriched and organized with clean file headers containi
 
 Apart from the core pillars, LeetCode Companion has been built with secondary failsafes and design details to ensure a seamless interface:
 
-*   **Adaptive Theme Observer:**
+*   **🌓 Adaptive Theme Observer:**
     The injected panel doesn't stick out. It uses a MutationObserver to actively monitor LeetCode's active theme. If you toggle LeetCode between Light and Dark mode, the panel dynamically matches the page's styling variables.
-*   **Double-Counting Protection:**
+*   **🛡️ Double-Counting Protection:**
     A smart 120-second active submit event check prevents the extension from double-counting your solved problems when refreshing tabs, reloading submission history, or viewing past code submissions.
-*   **Out-of-Session Warning System:**
+*   **⚠️ Out-of-Session Warning System:**
     If you log out of LeetCode, the extension actively reads editor warnings and DOM text to immediately flag the session timeout. Instead of failing silently, it will overlay a beautiful session expiration warning card on the page panel and toolbar.
-*   **Markdown-Formatted File Commits:**
+*   **📝 Markdown-Formatted File Commits:**
     All problem descriptions fetched from LeetCode are automatically cleaned using an integrated `htmlToMarkdown` parser, ensuring descriptions, list constraints, and examples look beautiful in your repo comment blocks.
-*   **Dual-Source Description Engine:**
+*   **🗂️ Dual-Source Description Engine:**
     If LeetCode limits GraphQL descriptions (common on Premium-only problems), the extension automatically falls back to DOM-scraped text with an expanded `20,000` character limit to ensure no descriptions are missing.
-*   **Edge-Snapping Draggable Panel:**
+*   **🧲 Edge-Snapping Draggable Panel:**
     The page panel can be positioned anywhere on the screen by dragging the header, and snaps magnetically to the left or right screen borders when released.
-*   **Real-Time Bidirectional Sync:**
+*   **🔗 Real-Time Bidirectional Sync:**
     Settings toggled in your Chrome Toolbar dashboard (such as trigger schedules) are instantly updated inside LeetCode's active tab without requiring page reloads.
-*   **Resilient Model Fallback Chain:**
+*   **🔥 Resilient Model Fallback Chain:**
     If Groq LLaMA 3.3 70B encounters rate limits or goes offline, the AI client automatically fails over to LLaMA 3.1 8B, ensuring zero disruptions during streak protection.
+
+<br />
+
+---
+
+## Built With
+
+*   **Manifest V3:** The modern, secure standard for Google Chrome Extensions.
+*   **Monaco Editor API Bridge:** Safely targets and interacts with LeetCode's browser code editor.
+*   **Groq AI Engine:** Integrates high-speed LLaMA 3.3/3.1 inference models for optimal coding solutions.
+*   **GitHub REST API:** Securely pushes formatted commits directly to your target repository.
+*   **Vanilla JS & CSS3:** Completely lightweight, fast, and dependency-free frontend implementation.
 
 <br />
 
