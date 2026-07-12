@@ -176,7 +176,7 @@ Apart from the core pillars, LeetCode Companion has been built with secondary fa
 ## 🚀 Installation & Try It Out
 
 > [!IMPORTANT]
-> **Chrome Web Store Launch Progress:** We are actively working hard to publish LeetCode Companion to the Chrome Web Store as soon as possible! Once reviewed and approved by Google, you will be able to install it with a single click.
+> **Chrome Web Store Launch Progress:** I am actively working hard to publish LeetCode Companion to the Chrome Web Store as soon as possible! Once reviewed and approved by Google, you will be able to install it with a single click.
 > 
 > In the meantime, you can easily load and test the extension locally on your browser by following the step-by-step setup guide below.
 
