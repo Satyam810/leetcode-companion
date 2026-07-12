@@ -66,7 +66,7 @@ function loadStreakSettings() {
 
     // Restore saved time values or use defaults
     const hour = data.streakProtectHour || '10';
-    const min  = data.streakProtectMinute !== undefined ? data.streakProtectMinute : '0';
+    const min  = data.streakProtectMinute !== undefined ? String(data.streakProtectMinute).padStart(2, '0') : '00';
     const ampm = data.streakProtectAmPm  || 'PM';
 
     $('streak-hour').value   = hour;
@@ -80,12 +80,14 @@ function saveStreakSettings() {
   let   minute  = parseInt($('streak-minute').value, 10);
   if (isNaN(minute) || minute < 0)  minute = 0;
   if (minute > 59)                  minute = 59;
-  $('streak-minute').value = minute;
+  
+  const minStr = String(minute).padStart(2, '0');
+  $('streak-minute').value = minStr;
 
   chrome.storage.sync.set({
     streakProtect:       enabled,
     streakProtectHour:   $('streak-hour').value,
-    streakProtectMinute: String(minute),
+    streakProtectMinute: minStr,
     streakProtectAmPm:   $('streak-ampm').value,
   });
 
