@@ -491,7 +491,12 @@
     }
     .lc-time-select:focus, .lc-time-input:focus { border-color: var(--lc-border-focus); }
     .lc-time-select { width: 50px; }
-    .lc-time-input { width: 38px; }
+    .lc-time-input { width: 38px; -moz-appearance: textfield; }
+    .lc-time-input::-webkit-outer-spin-button,
+    .lc-time-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
     .lc-time-ampm { width: 50px; }
     
     .lc-action-row { display: flex; gap: 8px; margin-top: 10px; }
@@ -595,7 +600,7 @@
                 <option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
               </select>
               <span style="color:#5c607d;">:</span>
-              <input type="text" class="lc-time-input" id="lc-db-minute" value="00" maxlength="2" />
+              <input type="number" class="lc-time-input" id="lc-db-minute" min="0" max="59" value="00" />
               <select class="lc-time-select lc-time-ampm" id="lc-db-ampm">
                 <option value="AM">AM</option>
                 <option value="PM">PM</option>
