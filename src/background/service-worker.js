@@ -476,7 +476,7 @@ async function fetchLeetCodeStats() {
 
     return stats;
   } catch (err) {
-    console.error('[LC-Companion SW] fetchLeetCodeStats error:', err);
+    console.warn('[LC-Companion SW] fetchLeetCodeStats warning (likely offline/network error):', err);
     return null;
   }
 }
@@ -517,7 +517,7 @@ async function fetchProblemDescription(slug) {
       .replace(/\s+/g, ' ')
       .trim();
   } catch (err) {
-    console.error('[LC-Companion SW] fetchProblemDescription error:', err);
+    console.warn('[LC-Companion SW] fetchProblemDescription warning (likely offline/network error):', err);
     return '';
   }
 }
@@ -550,7 +550,7 @@ async function handleAutoSolveSuccess(payload, sendResponse) {
 
     if (sendResponse) sendResponse({ success: true });
   } catch (err) {
-    console.error('[LC-Companion SW] handleAutoSolveSuccess error:', err);
+    console.warn('[LC-Companion SW] handleAutoSolveSuccess warning:', err);
     if (sendResponse) sendResponse({ success: false, error: err.message });
   }
 }
@@ -638,7 +638,7 @@ async function checkStreakProtection() {
       });
     });
   } catch (err) {
-    console.error('[LC-Companion SW] checkStreakProtection error:', err);
+    console.warn('[LC-Companion SW] checkStreakProtection warning:', err);
   }
 }
 
@@ -671,7 +671,7 @@ async function fetchDailyChallenge() {
       title:      challenge.question.title
     };
   } catch (err) {
-    console.error('[LC-Companion SW] fetchDailyChallenge error:', err);
+    console.warn('[LC-Companion SW] fetchDailyChallenge warning (likely offline/network error):', err);
     return null;
   }
 }
@@ -698,7 +698,7 @@ async function runAutoSolveImmediately() {
       });
     });
   } catch (err) {
-    console.error('[LC-Companion SW] runAutoSolveImmediately error:', err);
+    console.warn('[LC-Companion SW] runAutoSolveImmediately warning:', err);
     return false;
   }
 }
