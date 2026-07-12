@@ -251,20 +251,20 @@
     .lc-btn:hover { opacity: .9; transform: translateY(-1px); }
     .lc-btn:active { transform: translateY(0); }
     .lc-btn-primary {
-      background: linear-gradient(135deg, #6c63ff, #9c63ff);
+      background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
       color: #fff;
-      box-shadow: 0 4px 15px rgba(108,99,255,.4);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
     }
     .lc-btn-secondary {
-      background: var(--lc-bg-card); border: var(--lc-border); color: var(--lc-text-secondary);
+      background: transparent; border: var(--lc-border); color: var(--lc-text-secondary);
     }
-    .lc-btn-secondary:hover { border-color: var(--lc-border-focus); color: var(--lc-text-primary); }
+    .lc-btn-secondary:hover { border-color: var(--lc-border-focus); color: var(--lc-text-primary); background: var(--lc-bg-tab-hover); }
     .lc-btn-warn {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(245,158,11,.35);
+      background: rgba(245, 158, 11, 0.06);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
     }
-    .lc-btn-warn:hover { opacity: .9; }
+    .lc-btn-warn:hover { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.55); }
 
     .lc-alert {
       padding: 12px 14px; border-radius: 10px; margin: 10px 0;
@@ -530,8 +530,21 @@
 
         <!-- Tab Bar -->
         <div class="lc-tabs">
-          <button class="lc-tab-btn active" id="lc-tab-dashboard">📊 Dashboard</button>
-          <button class="lc-tab-btn" id="lc-tab-ai">🤖 AI Assistant</button>
+          <button class="lc-tab-btn active" id="lc-tab-dashboard" style="display:flex; align-items:center; justify-content:center; gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9"/>
+              <rect x="14" y="3" width="7" height="5"/>
+              <rect x="14" y="12" width="7" height="9"/>
+              <rect x="3" y="16" width="7" height="5"/>
+            </svg>
+            Dashboard
+          </button>
+          <button class="lc-tab-btn" id="lc-tab-ai" style="display:flex; align-items:center; justify-content:center; gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            AI Assistant
+          </button>
         </div>
 
         <!-- Dashboard View -->
@@ -552,7 +565,7 @@
             </div>
             <div class="lc-stat-card">
               <div class="lc-stat-value streak" id="lc-db-streak">0</div>
-              <div class="lc-stat-label">🔥 Streak</div>
+              <div class="lc-stat-label">Streak</div>
               <div class="lc-stat-sub" id="lc-db-streak-best">Best: 0</div>
             </div>
           </div>
@@ -560,14 +573,26 @@
           <!-- Actions -->
           <div style="display:flex; flex-direction:column; gap: 8px; margin-bottom:16px;">
             <button class="lc-sidebar-action-btn" id="lc-db-btn-help">
-              <div class="lc-action-icon yellow">💡</div>
+              <div class="lc-action-icon yellow">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+                  <line x1="9" y1="18" x2="15" y2="18"/>
+                  <line x1="10" y1="22" x2="14" y2="22"/>
+                </svg>
+              </div>
               <div class="lc-action-text">
                 <strong>Help Me Solve</strong>
                 <span>Get step-by-step guidance & hints</span>
               </div>
             </button>
             <button class="lc-sidebar-action-btn" id="lc-db-btn-sync">
-              <div class="lc-action-icon green">⬆</div>
+              <div class="lc-action-icon green">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
               <div class="lc-action-text">
                 <strong>Sync to GitHub</strong>
                 <span>Push current solution to your repo</span>
@@ -618,9 +643,28 @@
             </p>
           </div>
           <div id="lc-panel-actions">
-            <button class="lc-btn lc-btn-warn" id="lc-btn-help" style="flex: 1.2;">💡 Help Me Solve</button>
-            <button class="lc-btn lc-btn-primary" id="lc-btn-autosolve" style="flex: 1.2; background: linear-gradient(135deg, #a78bfa, #7c3aed); border: none; color: #fff;">⚡ Auto-Solve</button>
-            <button class="lc-btn lc-btn-secondary" id="lc-btn-sync" style="flex: 0.8;">⬆ Sync</button>
+            <button class="lc-btn lc-btn-warn" id="lc-btn-help" style="flex: 1.2;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+                <line x1="9" y1="18" x2="15" y2="18"/>
+                <line x1="10" y1="22" x2="14" y2="22"/>
+              </svg>
+              Help Me Solve
+            </button>
+            <button class="lc-btn lc-btn-primary" id="lc-btn-autosolve" style="flex: 1.2;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              Auto-Solve
+            </button>
+            <button class="lc-btn lc-btn-secondary" id="lc-btn-sync" style="flex: 0.8;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Sync
+            </button>
           </div>
           <div id="lc-chat-bar">
             <textarea id="lc-chat-input" placeholder="Ask a follow-up question..." rows="1"></textarea>
