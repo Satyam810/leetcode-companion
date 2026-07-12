@@ -511,11 +511,8 @@ async function fetchProblemDescription(slug) {
     if (!res.ok) return '';
     const data = await res.json();
     const htmlContent = data.data?.question?.content || '';
-    // Strip HTML tags and normalize whitespace
-    return htmlContent
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // Convert HTML to clean markdown to preserve formatting and paragraphs
+    return htmlToMarkdown(htmlContent);
   } catch (err) {
     console.warn('[LC-Companion SW] fetchProblemDescription warning (likely offline/network error):', err);
     return '';
