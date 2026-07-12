@@ -289,7 +289,7 @@ We take your privacy seriously. **All logic runs locally on your browser.**
 
 <div align="center">
 
-**Built with ❤️ by Satyam**
+**Designed & Engineered by Satyam**
 
 [![GitHub](https://img.shields.io/badge/GitHub-Satyam810-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Satyam810)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Satyam-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/satyamlpu/)
@@ -305,6 +305,6 @@ We take your privacy seriously. **All logic runs locally on your browser.**
 <div align="center">
 
 ### Show your support by starring the repository!
-<sub>Made with ⚡ by <a href="https://github.com/Satyam810">Satyam</a></sub>
+<sub>Created by <a href="https://github.com/Satyam810">Satyam</a></sub>
 
 </div>
