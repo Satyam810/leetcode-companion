@@ -173,21 +173,36 @@ Apart from the core pillars, LeetCode Companion has been built with secondary fa
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation & Try It Out
 
-### Option 1: Load from Source (Recommended for Devs)
+> [!IMPORTANT]
+> **Chrome Web Store Launch Progress:** We are actively working hard to publish LeetCode Companion to the Chrome Web Store as soon as possible! Once reviewed and approved by Google, you will be able to install it with a single click.
+> 
+> In the meantime, you can easily load and test the extension locally on your browser by following the step-by-step setup guide below.
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/Satyam810/leetcode-companion.git
-cd leetcode-companion
+### Step-by-Step Setup Guide
 
-# 2. Load in Chrome:
-#    -> Open chrome://extensions
-#    -> Enable "Developer mode" (top-right toggle)
-#    -> Click "Load unpacked"
-#    -> Select the cloned project folder
-```
+#### Option A: Clone the Repository (Recommended)
+1. **Clone the project** to your local machine using git:
+   ```bash
+   git clone https://github.com/Satyam810/leetcode-companion.git
+   cd leetcode-companion
+   ```
+
+#### Option B: Download ZIP File
+1. Scroll to the top of this repository page.
+2. Click the green **Code** button and select **Download ZIP**.
+3. Extract the downloaded `.zip` archive to a folder on your computer.
+
+---
+
+### Loading into Google Chrome / Chromium Browsers
+
+1. Open your browser and navigate to **`chrome://extensions/`** (or click the 3-dot menu → **Extensions** → **Manage Extensions**).
+2. Enable **Developer mode** by toggling the switch in the top-right corner.
+3. Click the **Load unpacked** button in the top-left corner.
+4. Select the root folder (`leetcode-companion` folder containing the `manifest.json` file).
+5. That's it! **LeetCode Companion** is now installed and active on your browser. Ready to protect your streak!
 
 ---
 
