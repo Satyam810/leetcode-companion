@@ -7,7 +7,7 @@
     <img src="https://readme-typing-svg.demolab.com?font=Outfit&size=30&duration=4000&pause=3000&color=209ced&center=true&vCenter=true&width=800&height=70&lines=LeetCode+Companion+%E2%80%94+Chrome+Extension" alt="LeetCode Companion — Chrome Extension" />
   </a>
   <br />
-  <p><strong>⚡ Auto-solve LeetCode challenges to protect your streak, get AI hints, and sync code to GitHub.</strong></p>
+  <p><strong>Auto-solve LeetCode challenges to protect your streak, get AI hints, and sync code to GitHub.</strong></p>
 
   <p>
     <a href="https://chrome.google.com/webstore"><img src="https://img.shields.io/badge/Chrome_Web_Store-v1.0.0-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Web Store" /></a>
@@ -18,12 +18,12 @@
 
   <p>
     <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/Code_Style-Prettier-FF69B4?style=flat-square&logo=prettier&logoColor=white" alt="Code Style: Prettier" /></a>
-    <a href="#-privacy--security"><img src="https://img.shields.io/badge/Security-100%25_Safe-success?style=flat-square" alt="Security: 100% Safe" /></a>
+    <a href="#privacy--security"><img src="https://img.shields.io/badge/Security-100%25_Safe-success?style=flat-square" alt="Security: 100% Safe" /></a>
     <a href="https://groq.com"><img src="https://img.shields.io/badge/AI_Engine-Groq_LLaMA_3.3-orange?style=flat-square" alt="AI Engine: Groq" /></a>
   </p>
 
   <p>
-    🛡️ <strong>Auto-Solve Streak Protection</strong> &nbsp;·&nbsp; 🤖 <strong>AI-Powered Learning</strong> &nbsp;·&nbsp; 🔄 <strong>Automatic GitHub Sync</strong>
+    Auto-Solve Streak Protection &nbsp;·&nbsp; AI-Powered Learning &nbsp;·&nbsp; Automatic GitHub Sync
   </p>
 
   <br />
@@ -36,7 +36,7 @@
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
 You've been grinding LeetCode for **47 days straight**. You have a meeting, an exam, a deadline — and by the time you remember, it's midnight. **Streak gone. 47 days wasted.**
 
@@ -46,22 +46,22 @@ Or maybe you solved a problem, but forgot to save the code. Now it's lost in Lee
 
 <br />
 
-## 💡 What Makes This Different?
+## What Makes This Different?
 
 Most extensions only push your code to a repo. That's it. LeetCode Companion is a **complete AI-powered companion** that:
 
 <table>
   <tr>
     <td align="center" width="33%">
-      <h3>🛡️ Protects</h3>
+      <h3>Protects</h3>
       <p>Auto-solves the daily challenge when you can't, so your streak <b>never breaks</b>.</p>
     </td>
     <td align="center" width="33%">
-      <h3>🧠 Teaches</h3>
+      <h3>Teaches</h3>
       <p>AI explains problems step-by-step in a beautiful floating sidebar so you actually <b>learn</b>.</p>
     </td>
     <td align="center" width="33%">
-      <h3>🔄 Records</h3>
+      <h3>Records</h3>
       <p>Every solution auto-syncs to GitHub, building your <b>coding portfolio</b>.</p>
     </td>
   </tr>
@@ -74,32 +74,32 @@ Most extensions only push your code to a repo. That's it. LeetCode Companion is 
 
 ---
 
-## ✨ Core Features (The Big Three)
+## Core Features
 
-### 🛡️ 1. Streak Protection (Auto-Solve Pipeline)
+### 1. Streak Protection (Auto-Solve Pipeline)
 *Set a time. Forget about it. Your streak is safe forever.*
 
 LeetCode resets the daily challenge at midnight UTC. If life gets in the way and you can't solve it, LeetCode Companion has your back. 
 
 ```
-⏰ You set trigger time to 10:00 PM
-📋 Every 60 seconds, the extension checks: "Did the user solve today's daily challenge?"
-✅ If YES → Silently marks the day as done. Nothing happens.
-❌ If NO and it's past 10:00 PM → Auto-solve activates:
+You set trigger time to 10:00 PM
+Every 60 seconds, the extension checks: "Did the user solve today's daily challenge?"
+If YES → Silently marks the day as done. Nothing happens.
+If NO and it's past 10:00 PM → Auto-solve activates:
 ```
 
 #### The Auto-Solve Pipeline:
 ```mermaid
 graph TD
-    A["⏰ Trigger Time Reached"] --> B["🔍 Check LeetCode Daily Challenge Status"]
-    B -->|Already Solved| C["✅ Mark Complete — Do Nothing"]
-    B -->|Not Solved| D["🚀 Open Daily Challenge in New Tab"]
-    D --> E["🤖 AI Generates Optimal Solution via Groq"]
-    E --> F["✍️ Types Code into Monaco Editor"]
-    F --> G["▶️ Clicks Submit"]
-    G --> H["⏳ Waits for 'Accepted' Verdict"]
-    H --> I["🔄 Auto-Syncs Solution to GitHub"]
-    I --> J["🔥 Streak Protected!"]
+    A["Trigger Time Reached"] --> B["Check LeetCode Daily Challenge Status"]
+    B -->|Already Solved| C["Mark Complete — Do Nothing"]
+    B -->|Not Solved| D["Open Daily Challenge in New Tab"]
+    D --> E["AI Generates Optimal Solution via Groq"]
+    E --> F["Types Code into Monaco Editor"]
+    F --> G["Clicks Submit"]
+    G --> H["Waits for 'Accepted' Verdict"]
+    H --> I["Auto-Syncs Solution to GitHub"]
+    I --> J["Streak Protected!"]
 ```
 
 > [!TIP]
@@ -107,7 +107,7 @@ graph TD
 
 ---
 
-### 🤖 2. AI-Powered Learning Assistant
+### 2. AI-Powered Learning Assistant
 *Don't just solve problems. Understand them.*
 
 <div align="center">
@@ -116,13 +116,13 @@ graph TD
 
 When you're stuck on a problem, click **"Help Me Solve"** to open a premium draggable panel containing:
 
-- **🎯 Step-by-Step Approach**: Breaks down the problem into digestible steps and identifies the underlying pattern (Two Pointers, DP, Graph, etc.).
-- **💬 Interactive Follow-Up Chat**: Ask follow-up questions in natural language, request optimizations, or clarify edge cases.
-- **⚡ Supercharged Speed**: Powered by **Groq LLaMA 3.3 70B** for near-instant responses.
+- **Step-by-Step Approach**: Breaks down the problem into digestible steps and identifies the underlying pattern (Two Pointers, DP, Graph, etc.).
+- **Interactive Follow-Up Chat**: Ask follow-up questions in natural language, request optimizations, or clarify edge cases.
+- **Supercharged Speed**: Powered by **Groq LLaMA 3.3 70B** for near-instant responses.
 
 ---
 
-### 🔄 3. Intelligent GitHub Sync
+### 3. Intelligent GitHub Sync
 *Every problem you solve automatically becomes a GitHub contribution.*
 
 <div align="center">
@@ -148,32 +148,32 @@ Every synced solution is enriched and organized with clean file headers containi
 
 ---
 
-## ⚡ Minor Features & Quality-of-Life Details
+## Quality-of-Life Details
 
 Apart from the core pillars, LeetCode Companion has been built with secondary failsafes and design details to ensure a seamless interface:
 
-*   **🌓 Adaptive Dark & Light Theme Observer:**
+*   **Adaptive Theme Observer:**
     The injected panel doesn't stick out. It uses a MutationObserver to actively monitor LeetCode's active theme. If you toggle LeetCode between Light and Dark mode, the panel dynamically matches the page's styling variables.
-*   **🛡️ Double-Counting Protection:**
+*   **Double-Counting Protection:**
     A smart 120-second active submit event check prevents the extension from double-counting your solved problems when refreshing tabs, reloading submission history, or viewing past code submissions.
-*   **⚠️ Out-of-Session Warning System:**
+*   **Out-of-Session Warning System:**
     If you log out of LeetCode, the extension actively reads editor warnings and DOM text to immediately flag the session timeout. Instead of failing silently, it will overlay a beautiful session expiration warning card on the page panel and toolbar.
-*   **📝 Markdown-Formatted File Commits:**
+*   **Markdown-Formatted File Commits:**
     All problem descriptions fetched from LeetCode are automatically cleaned using an integrated `htmlToMarkdown` parser, ensuring descriptions, list constraints, and examples look beautiful in your repo comment blocks.
-*   **🗂️ Dual-Source Description Engine:**
+*   **Dual-Source Description Engine:**
     If LeetCode limits GraphQL descriptions (common on Premium-only problems), the extension automatically falls back to DOM-scraped text with an expanded `20,000` character limit to ensure no descriptions are missing.
-*   **🧲 Edge-Snapping Draggable Panel:**
+*   **Edge-Snapping Draggable Panel:**
     The page panel can be positioned anywhere on the screen by dragging the header, and snaps magnetically to the left or right screen borders when released.
-*   **🔗 Real-Time Bidirectional Sync:**
+*   **Real-Time Bidirectional Sync:**
     Settings toggled in your Chrome Toolbar dashboard (such as trigger schedules) are instantly updated inside LeetCode's active tab without requiring page reloads.
-*   **🔥 Resilient Model Fallback Chain:**
+*   **Resilient Model Fallback Chain:**
     If Groq LLaMA 3.3 70B encounters rate limits or goes offline, the AI client automatically fails over to LLaMA 3.1 8B, ensuring zero disruptions during streak protection.
 
 <br />
 
 ---
 
-## 🚀 Installation & Try It Out
+## Installation & Try It Out
 
 > [!IMPORTANT]
 > **Chrome Web Store Launch Progress:** I am actively working hard to publish LeetCode Companion to the Chrome Web Store as soon as possible! Once reviewed and approved by Google, you will be able to install it with a single click.
@@ -206,7 +206,7 @@ Apart from the core pillars, LeetCode Companion has been built with secondary fa
 
 ---
 
-## ⚙️ Setup Guide
+## Setup Guide
 
 ### Step 1: Get Your Free Groq AI Key
 1. Go to **[console.groq.com](https://console.groq.com)** and sign up *(completely free)*.
@@ -227,7 +227,7 @@ Apart from the core pillars, LeetCode Companion has been built with secondary fa
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 leetcode-companion/
@@ -262,7 +262,7 @@ leetcode-companion/
 
 ---
 
-## 🔐 Privacy & Security
+## Privacy & Security
 
 We take your privacy seriously. **All logic runs locally on your browser.**
 - **API Keys**: Stored in Chrome's encrypted `storage.sync`.
@@ -273,7 +273,7 @@ We take your privacy seriously. **All logic runs locally on your browser.**
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 <div align="center">
 
@@ -292,7 +292,7 @@ We take your privacy seriously. **All logic runs locally on your browser.**
 
 <div align="center">
 
-### 🌟 Show your support by starring the repository!
+### Show your support by starring the repository!
 <sub>Made with ⚡ by <a href="https://github.com/Satyam810">Satyam</a></sub>
 
 </div>
