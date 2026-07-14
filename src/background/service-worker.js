@@ -911,7 +911,54 @@ async function sendTelegramSolutionCommand(langArg = 'Python') {
   }
 
   const targetLang = langArg.trim();
-  aasync function getLeetCodeCsrfToken() {
+  await sendTelegramMessage(`⏳ *Generating solution in ${targetLang} via Groq LLaMA 3.3…*`);
+  const daily = await fetchDailyChallenge();
+  if (!daily) {
+    await sendTelegramMessage('❌ *Failed to fetch today\'s challenge.*');
+    return;
+  }
+
+  const description = await fetchProblemDescription(daily.titleSlug);
+  if (!description) {
+    await sendTelegramMessage('❌ *Failed to retrieve the problem description.*');
+    return;
+  }
+
+  const snippets = await fetchQuestionSnippets(daily.titleSlug);
+  let templateCode = '';
+  const submitLangSlug = mapLangToLeetCodeSubmitName(targetLang);
+  if (snippets) {
+    const snippet = snippets.find(s => s.langSlug === submitLangSlug);
+    if (snippet) templateCode = snippet.code;
+  }
+
+  try {
+    const grok = new GrokAPI(settings.grokApiKey);
+    const templateHint = templateCode 
+      ? `You MUST write your solution inside this exact class/method structure:\n\`\`\`\n${templateCode}\n\`\`\`\n`
+      : '';
+
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert software engineer. Generate the optimal solution code in ${targetLang} for the LeetCode problem.
+${templateHint}Return ONLY the code block inside standard markdown fences (e.g., \`\`\`) without any conversational introduction or conclusion.`
+      },
+      {
+        role: 'user',
+        content: `Problem Title: ${daily.title}\nDescription:\n${description}`
+      }
+    ];
+    const codeResponse = await grok.generateChat(messages, { maxTokens: 1500, temperature: 0.2 });
+    
+    await sendTelegramMessage(`💡 *Optimal AI Solution in ${targetLang} for "${daily.title}":*`);
+    await sendTelegramMessage(codeResponse);
+  } catch (err) {
+    await sendTelegramMessage(`❌ *Failed to generate solution:* ${err.message}`);
+  }
+}
+
+async function getLeetCodeCsrfToken() {
   return new Promise(resolve => {
     chrome.cookies.getAll({ domain: 'leetcode.com', name: 'csrftoken' }, cookies => {
       if (cookies && cookies.length > 0) {
