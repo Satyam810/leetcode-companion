@@ -606,7 +606,17 @@ async function checkStreakProtection() {
 
     console.log(`[LC-Companion SW] Streak Protection checked. Current Time: ${curTimeInMinutes}m, Target Time: ${targetTimeInMinutes}m.`);
 
-    if (curTimeInMinutes < targetTimeInMinutes) {
+    // Determine trigger state: local time passed OR LeetCode deadline is close (last 3 hours UTC: 21:00-23:59)
+    let shouldTrigger = false;
+    if (curTimeInMinutes >= targetTimeInMinutes) {
+      shouldTrigger = true;
+    }
+    const utcHour = now.getUTCHours();
+    if (utcHour >= 21) {
+      shouldTrigger = true;
+    }
+
+    if (!shouldTrigger) {
       console.log('[LC-Companion SW] Streak Protection: Not trigger time yet.');
       return;
     }
@@ -646,16 +656,9 @@ async function checkStreakProtection() {
       return;
     }
 
-    // Unsolved daily challenge! Open a daily challenge tab in foreground
-    console.log('[LC-Companion SW] Streak protection triggered! Opening daily challenge tab:', daily.titleSlug);
-    chrome.storage.local.set({ autoSolveSlug: daily.titleSlug }, () => {
-      chrome.tabs.create({
-        url: `https://leetcode.com/problems/${daily.titleSlug}/`,
-        active: true
-      }, tab => {
-        chrome.storage.local.set({ activeAutoSolveTabId: tab.id });
-      });
-    });
+    // Unsolved daily challenge! Run headless background solver instead of opening intrusive browser tabs
+    console.log('[LC-Companion SW] Streak protection triggered! Solving daily challenge in background:', daily.titleSlug);
+    await solveDailyChallengeInBackground();
   } catch (err) {
     console.warn('[LC-Companion SW] checkStreakProtection warning:', err);
   }
@@ -808,7 +811,7 @@ async function handleTelegramCommand(cmd) {
   try {
     const settings = await StorageService.getSettings();
     if (settings.grokApiKey) {
-      await sendTelegramMessage('🤖 *Thinking…*');
+      await sendTelegramMessage('*Thinking...*');
       const grok = new GrokAPI(settings.grokApiKey);
       const daily = await fetchDailyChallenge();
       const dailyDesc = daily ? await fetchProblemDescription(daily.titleSlug) : '';
@@ -823,9 +826,10 @@ Current Daily Challenge Context:
 Guidelines:
 1. Do NOT solve, explain, or output the solution for the current daily challenge unless the user explicitly asks for the solution or asks you to solve it.
 2. If the user just greets you (e.g., "hi", "hello", "hii", "hey", "how are you"), reply with a brief, friendly greeting, introduce yourself as their LeetCode Companion, and ask how you can help. Keep it very conversational and short.
-3. If the user asks for today's challenge details or description, provide a summary of the problem statement and its difficulty.
+3. If the user asks for today's challenge details or description, provide the FULL problem statement description, including all example cases, inputs, outputs, explanations, and constraints. Do NOT summarize or skip examples.
 4. If they ask for the solution or optimal code, write the optimal code inside clean markdown fences.
-5. Format your response in beautiful, copy-pasteable Markdown. Keep your replies concise and clean.`;
+5. Do NOT use markdown header hash tags (like #, ##, ###, ####) at all in your reply, as they do not render styled on Telegram. Instead, format headers using bold text (like *Header:* or *Title*).
+6. Format your response in beautiful, copy-pasteable Markdown. Keep your replies concise, clean, and highly professional.`;
 
       const reply = await grok.generateChat([
         { role: 'system', content: systemPrompt },
@@ -988,7 +992,7 @@ async function fetchQuestionSnippets(slug) {
 }
 
 async function solveDailyChallengeInBackground() {
-  await sendTelegramMessage('⏳ *Starting background Auto-Solver…*');
+  await sendTelegramMessage('*Starting background Auto-Solver...*');
 
   const daily = await fetchDailyChallenge();
   if (!daily) {
@@ -1020,7 +1024,7 @@ async function solveDailyChallengeInBackground() {
     return;
   }
 
-  await sendTelegramMessage('🧠 *Asking Groq LLaMA 3.3 to write optimal solution code…*');
+  await sendTelegramMessage('*Generating optimal solution code via Groq LLaMA 3.3...*');
   let generatedCode = '';
   try {
     const settings = await StorageService.getSettings();
@@ -1054,7 +1058,7 @@ Return ONLY the raw executable python3 code block inside markdown fences (e.g. \
     return;
   }
 
-  await sendTelegramMessage('🚀 *Submitting code directly to LeetCode API…*');
+  await sendTelegramMessage('*Submitting solution directly to LeetCode...*');
   try {
     const csrfToken = await getLeetCodeCsrfToken();
     if (!csrfToken) {
@@ -1106,7 +1110,7 @@ Return ONLY the raw executable python3 code block inside markdown fences (e.g. \
       throw new Error('No submission ID returned. Session might be expired.');
     }
 
-    await sendTelegramMessage('⏳ *Waiting for compiler verdict…*');
+    await sendTelegramMessage('*Waiting for compilation result...*');
     let verdict = null;
     for (let i = 0; i < 15; i++) {
       await new Promise(r => setTimeout(r, 2000));
@@ -1126,7 +1130,15 @@ Return ONLY the raw executable python3 code block inside markdown fences (e.g. \
     }
 
     if (verdict.status_msg === 'Accepted') {
-      await sendTelegramMessage('✅ *LeetCode Accepted!* Syncing to GitHub…');
+      await sendTelegramMessage('*LeetCode Accepted! Syncing to GitHub...*');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const date = String(now.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${date}`;
+      await new Promise(resolve => {
+        chrome.storage.local.set({ lastAutoSolvedDate: today }, resolve);
+      });
       await handleAcceptedSubmission({
         title: daily.title,
         difficulty: daily.difficulty,
@@ -1143,7 +1155,7 @@ Return ONLY the raw executable python3 code block inside markdown fences (e.g. \
     }
 
   } catch (err) {
-    await sendTelegramMessage(`❌ *Background solver failed:* ${err.message}`);
+    await sendTelegramMessage(`*Background solver failed:* ${err.message}`);
   }
 }
 
