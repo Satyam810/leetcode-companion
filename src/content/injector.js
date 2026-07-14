@@ -1926,7 +1926,7 @@
     // Check for auto-solve flag in local storage (resilient to SPA router stripping hash)
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime?.id) {
-        chrome.storage.local.get(['autoSolveSlug'], (data) => {
+        chrome.storage.local.get(['autoSolveSlug', 'backgroundSolveSlug'], (data) => {
           if (chrome.runtime?.lastError) return;
           const currentSlug = getProblemSlug();
           if (data.autoSolveSlug && data.autoSolveSlug === currentSlug) {
@@ -1934,6 +1934,12 @@
             setTimeout(() => {
               doAutoSolveLoop();
             }, 3000);
+          }
+          if (data.backgroundSolveSlug && data.backgroundSolveSlug === currentSlug) {
+            chrome.storage.local.remove(['backgroundSolveSlug']);
+            setTimeout(() => {
+              runHeadlessSolveOnPage(currentSlug);
+            }, 1000);
           }
         });
       }
@@ -1976,6 +1982,176 @@
   injectStyles();
   createSidebar();
   setupListeners();
+
+  async function runHeadlessSolveOnPage(slug) {
+    try {
+      const title = document.querySelector('[class*="text-title-large"]')?.innerText || document.title;
+      const description = getDescription();
+
+      const snippets = await fetchSnippetsGraphQL(slug);
+      let templateCode = '';
+      if (snippets) {
+        const snippet = snippets.find(s => s.langSlug === 'python3');
+        if (snippet) templateCode = snippet.code;
+      }
+
+      if (!templateCode) {
+        throw new Error('Could not find Python 3 code template.');
+      }
+
+      chrome.runtime.sendMessage({
+        type: 'GENERATE_BACKGROUND_CODE',
+        payload: { title, description, templateCode }
+      }, async (response) => {
+        if (!response || !response.success || !response.code) {
+          await notifyBackgroundSolverFailed(response?.error || 'AI generation failed');
+          closeSelfTab();
+          return;
+        }
+
+        const generatedCode = response.code;
+        const csrfToken = getCookie('csrftoken');
+        const questionId = await fetchQuestionIdGraphQL(slug);
+
+        if (!csrfToken || !questionId) {
+          await notifyBackgroundSolverFailed('Missing CSRF token or Question ID. Please log in.');
+          closeSelfTab();
+          return;
+        }
+
+        const submitRes = await fetch(`/problems/${slug}/submit/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrftoken': csrfToken
+          },
+          body: JSON.stringify({
+            lang: 'python3',
+            question_id: questionId,
+            typed_code: generatedCode
+          })
+        });
+
+        if (!submitRes.ok) {
+          await notifyBackgroundSolverFailed(`HTTP ${submitRes.status} submission error`);
+          closeSelfTab();
+          return;
+        }
+
+        const submitData = await submitRes.json();
+        const submissionId = submitData.submission_id;
+
+        if (!submissionId) {
+          await notifyBackgroundSolverFailed('No submission ID returned by LeetCode.');
+          closeSelfTab();
+          return;
+        }
+
+        let verdict = null;
+        for (let i = 0; i < 15; i++) {
+          await new Promise(r => setTimeout(r, 2000));
+          const checkRes = await fetch(`/submissions/detail/${submissionId}/check/`);
+          if (!checkRes.ok) continue;
+          const checkData = await checkRes.json();
+          if (checkData.state === 'SUCCESS') {
+            verdict = checkData;
+            break;
+          }
+        }
+
+        if (!verdict) {
+          await notifyBackgroundSolverFailed('Compilation timed out.');
+          closeSelfTab();
+          return;
+        }
+
+        if (verdict.status_msg === 'Accepted') {
+          chrome.runtime.sendMessage({
+            type: 'BACKGROUND_SOLVE_ACCEPTED',
+            payload: {
+              title,
+              difficulty: getDifficulty(),
+              code: generatedCode,
+              slug: slug
+            }
+          });
+        } else {
+          let failDetails = verdict.status_msg;
+          if (verdict.compile_error) {
+            failDetails = `Compile Error: ${verdict.compile_error}`;
+          }
+          await notifyBackgroundSolverFailed(`Verdict: ${failDetails}`);
+        }
+
+        closeSelfTab();
+      });
+
+    } catch (err) {
+      await notifyBackgroundSolverFailed(err.message);
+      closeSelfTab();
+    }
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
+
+  function closeSelfTab() {
+    chrome.runtime.sendMessage({ type: 'CLOSE_BACKGROUND_TAB' });
+  }
+
+  async function notifyBackgroundSolverFailed(error) {
+    chrome.runtime.sendMessage({ type: 'BACKGROUND_SOLVE_FAILED', payload: { error } });
+  }
+
+  async function fetchSnippetsGraphQL(slug) {
+    try {
+      const res = await fetch('/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `query questionEditorData($titleSlug: String!) {
+            question(titleSlug: $titleSlug) {
+              codeSnippets {
+                lang
+                langSlug
+                code
+              }
+            }
+          }`,
+          variables: { titleSlug: slug }
+        })
+      });
+      const data = await res.json();
+      return data.data?.question?.codeSnippets || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function fetchQuestionIdGraphQL(slug) {
+    try {
+      const res = await fetch('/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `query questionTitle($titleSlug: String!) {
+            question(titleSlug: $titleSlug) {
+              questionId
+            }
+          }`,
+          variables: { titleSlug: slug }
+        })
+      });
+      const data = await res.json();
+      return data.data?.question?.questionId || '';
+    } catch (e) {
+      return '';
+    }
+  }
 
   console.log('[LC-Companion] injector.js loaded');
 })();

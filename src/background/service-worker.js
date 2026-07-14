@@ -50,6 +50,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       runAutoSolveImmediately().then(() => sendResponse({ success: true }));
       return true;
 
+    case 'GENERATE_BACKGROUND_CODE':
+      handleGenerateBackgroundCode(message.payload, sendResponse);
+      return true;
+
+    case 'BACKGROUND_SOLVE_ACCEPTED':
+      handleBackgroundSolveAccepted(message.payload, sendResponse);
+      return true;
+
+    case 'BACKGROUND_SOLVE_FAILED':
+      handleBackgroundSolveFailed(message.payload, sendResponse);
+      return true;
+
+    case 'CLOSE_BACKGROUND_TAB':
+      handleCloseBackgroundTab(sendResponse);
+      return true;
+
     default:
       return false;
   }
@@ -895,57 +911,14 @@ async function sendTelegramSolutionCommand(langArg = 'Python') {
   }
 
   const targetLang = langArg.trim();
-  await sendTelegramMessage(`⏳ *Generating solution in ${targetLang} via Groq LLaMA 3.3…*`);
-  const daily = await fetchDailyChallenge();
-  if (!daily) {
-    await sendTelegramMessage('❌ *Failed to fetch today\'s challenge.*');
-    return;
-  }
-
-  const description = await fetchProblemDescription(daily.titleSlug);
-  if (!description) {
-    await sendTelegramMessage('❌ *Failed to retrieve the problem description.*');
-    return;
-  }
-
-  const snippets = await fetchQuestionSnippets(daily.titleSlug);
-  let templateCode = '';
-  const submitLangSlug = mapLangToLeetCodeSubmitName(targetLang);
-  if (snippets) {
-    const snippet = snippets.find(s => s.langSlug === submitLangSlug);
-    if (snippet) templateCode = snippet.code;
-  }
-
-  try {
-    const grok = new GrokAPI(settings.grokApiKey);
-    const templateHint = templateCode 
-      ? `You MUST write your solution inside this exact class/method structure:\n\`\`\`\n${templateCode}\n\`\`\`\n`
-      : '';
-
-    const messages = [
-      {
-        role: 'system',
-        content: `You are an expert software engineer. Generate the optimal solution code in ${targetLang} for the LeetCode problem.
-${templateHint}Return ONLY the code block inside standard markdown fences (e.g., \`\`\`) without any conversational introduction or conclusion.`
-      },
-      {
-        role: 'user',
-        content: `Problem Title: ${daily.title}\nDescription:\n${description}`
-      }
-    ];
-    const codeResponse = await grok.generateChat(messages, { maxTokens: 1500, temperature: 0.2 });
-    
-    await sendTelegramMessage(`💡 *Optimal AI Solution in ${targetLang} for "${daily.title}":*`);
-    await sendTelegramMessage(codeResponse);
-  } catch (err) {
-    await sendTelegramMessage(`❌ *Failed to generate solution:* ${err.message}`);
-  }
-}
-
-async function getLeetCodeCsrfToken() {
+  aasync function getLeetCodeCsrfToken() {
   return new Promise(resolve => {
-    chrome.cookies.get({ url: 'https://leetcode.com', name: 'csrftoken' }, cookie => {
-      resolve(cookie ? cookie.value : '');
+    chrome.cookies.getAll({ domain: 'leetcode.com', name: 'csrftoken' }, cookies => {
+      if (cookies && cookies.length > 0) {
+        resolve(cookies[0].value);
+      } else {
+        resolve('');
+      }
     });
   });
 }
@@ -996,7 +969,7 @@ async function solveDailyChallengeInBackground() {
 
   const daily = await fetchDailyChallenge();
   if (!daily) {
-    await sendTelegramMessage('❌ *Failed to fetch today\'s challenge.*');
+    await sendTelegramMessage('*Failed to fetch today\'s challenge.*');
     return;
   }
 
@@ -1005,29 +978,29 @@ async function solveDailyChallengeInBackground() {
     return;
   }
 
-  const description = await fetchProblemDescription(daily.titleSlug);
-  if (!description) {
-    await sendTelegramMessage('❌ *Failed to retrieve the problem description.*');
-    return;
-  }
+  await sendTelegramMessage('*Initiating headless solver via background tab...*');
 
-  const snippets = await fetchQuestionSnippets(daily.titleSlug);
-  let templateCode = '';
-  // Default background solve language to python3
-  if (snippets) {
-    const snippet = snippets.find(s => s.langSlug === 'python3');
-    if (snippet) templateCode = snippet.code;
-  }
+  // Open the tab in the background (active: false)
+  chrome.tabs.create({
+    url: `https://leetcode.com/problems/${daily.titleSlug}/`,
+    active: false
+  }, tab => {
+    chrome.storage.local.set({ 
+      backgroundSolveSlug: daily.titleSlug, 
+      backgroundSolveTabId: tab.id 
+    });
+  });
+}
 
-  if (!templateCode) {
-    await sendTelegramMessage('❌ *Failed to retrieve LeetCode code snippets.*');
-    return;
-  }
-
-  await sendTelegramMessage('*Generating optimal solution code via Groq LLaMA 3.3...*');
-  let generatedCode = '';
+async function handleGenerateBackgroundCode(payload, sendResponse) {
   try {
     const settings = await StorageService.getSettings();
+    if (!settings.grokApiKey) {
+      return sendResponse({ success: false, error: 'Groq API key not configured.' });
+    }
+
+    await sendTelegramMessage('*Generating optimal solution code via Groq LLaMA 3.3...*');
+
     const grok = new GrokAPI(settings.grokApiKey);
     const messages = [
       {
@@ -1035,129 +1008,71 @@ async function solveDailyChallengeInBackground() {
         content: `You are an expert competitive programmer. Write the optimal solution code in Python 3 for the LeetCode problem.
 You MUST write your solution inside this exact class/method structure:
 \`\`\`python
-${templateCode}
+${payload.templateCode}
 \`\`\`
 Return ONLY the raw executable python3 code block inside markdown fences (e.g. \`\`\`python). Do not add comments inside the code block.`
       },
       {
         role: 'user',
-        content: `Problem Title: ${daily.title}\nDescription:\n${description}`
+        content: `Problem Title: ${payload.title}\nDescription:\n${payload.description}`
       }
     ];
+
     const codeResponse = await grok.generateChat(messages, { maxTokens: 1500, temperature: 0.2 });
-
     const match = codeResponse.match(/```(?:python|py)?([\s\S]*?)```/i);
-    generatedCode = match ? match[1].trim() : codeResponse.trim();
+    const generatedCode = match ? match[1].trim() : codeResponse.trim();
+
+    sendResponse({ success: true, code: generatedCode });
   } catch (err) {
-    await sendTelegramMessage(`❌ *AI Generation failed:* ${err.message}`);
-    return;
-  }
-
-  if (!generatedCode) {
-    await sendTelegramMessage('❌ *No code was generated by the AI.*');
-    return;
-  }
-
-  await sendTelegramMessage('*Submitting solution directly to LeetCode...*');
-  try {
-    const csrfToken = await getLeetCodeCsrfToken();
-    if (!csrfToken) {
-      throw new Error('Could not find active LeetCode session. Make sure you are logged in to leetcode.com on Chrome.');
-    }
-
-    const snippetsData = await fetch('https://leetcode.com/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `query questionTitle($titleSlug: String!) {
-          question(titleSlug: $titleSlug) {
-            questionId
-          }
-        }`,
-        variables: { titleSlug: daily.titleSlug }
-      })
-    });
-    const parsedSnippet = await snippetsData.json();
-    const questionId = parsedSnippet.data?.question?.questionId;
-
-    if (!questionId) {
-      throw new Error('Could not retrieve LeetCode question ID.');
-    }
-
-    const submitUrl = `https://leetcode.com/problems/${daily.titleSlug}/submit/`;
-    const res = await fetch(submitUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-csrftoken': csrfToken,
-        'Referer': `https://leetcode.com/problems/${daily.titleSlug}/`
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        lang: 'python3',
-        question_id: questionId,
-        typed_code: generatedCode
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} submission error`);
-    }
-
-    const data = await res.json();
-    const submissionId = data.submission_id;
-    if (!submissionId) {
-      throw new Error('No submission ID returned. Session might be expired.');
-    }
-
-    await sendTelegramMessage('*Waiting for compilation result...*');
-    let verdict = null;
-    for (let i = 0; i < 15; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      const checkRes = await fetch(`https://leetcode.com/submissions/detail/${submissionId}/check/`, {
-        credentials: 'include'
-      });
-      if (!checkRes.ok) continue;
-      const checkData = await checkRes.json();
-      if (checkData.state === 'SUCCESS') {
-        verdict = checkData;
-        break;
-      }
-    }
-
-    if (!verdict) {
-      throw new Error('Compilation timeout.');
-    }
-
-    if (verdict.status_msg === 'Accepted') {
-      await sendTelegramMessage('*LeetCode Accepted! Syncing to GitHub...*');
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const date = String(now.getDate()).padStart(2, '0');
-      const today = `${year}-${month}-${date}`;
-      await new Promise(resolve => {
-        chrome.storage.local.set({ lastAutoSolvedDate: today }, resolve);
-      });
-      await handleAcceptedSubmission({
-        title: daily.title,
-        difficulty: daily.difficulty,
-        language: 'py',
-        code: generatedCode,
-        slug: daily.titleSlug
-      }, () => {});
-    } else {
-      let failDetails = verdict.status_msg;
-      if (verdict.compile_error) {
-        failDetails = `Compile Error: ${verdict.compile_error}`;
-      }
-      throw new Error(`Verdict: ${failDetails}`);
-    }
-
-  } catch (err) {
-    await sendTelegramMessage(`*Background solver failed:* ${err.message}`);
+    sendResponse({ success: false, error: err.message });
   }
 }
+
+async function handleBackgroundSolveAccepted(payload, sendResponse) {
+  try {
+    await sendTelegramMessage('*LeetCode Accepted! Syncing to GitHub...*');
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const date = String(now.getDate()).padStart(2, '0');
+    const today = `${year}-${month}-${date}`;
+
+    await new Promise(resolve => {
+      chrome.storage.local.set({ lastAutoSolvedDate: today }, resolve);
+    });
+
+    await handleAcceptedSubmission({
+      title: payload.title,
+      difficulty: payload.difficulty,
+      language: 'py',
+      code: payload.code,
+      slug: payload.slug
+    }, () => {});
+
+    if (sendResponse) sendResponse({ success: true });
+  } catch (err) {
+    console.warn('[LC-Companion SW] handleBackgroundSolveAccepted error:', err);
+    if (sendResponse) sendResponse({ success: false, error: err.message });
+  }
+}
+
+async function handleBackgroundSolveFailed(payload, sendResponse) {
+  await sendTelegramMessage(`*Background solver failed:* ${payload.error}`);
+  if (sendResponse) sendResponse({ success: true });
+}
+
+async function handleCloseBackgroundTab(sendResponse) {
+  chrome.storage.local.get(['backgroundSolveTabId'], data => {
+    if (data.backgroundSolveTabId) {
+      chrome.tabs.remove(data.backgroundSolveTabId, () => {
+        chrome.storage.local.remove(['backgroundSolveTabId']);
+        if (sendResponse) sendResponse({ success: true });
+      });
+    } else {
+      if (sendResponse) sendResponse({ success: false });
+    }
+  });
+
 
 let isPolling = false;
 let isQueueCleared = false;
