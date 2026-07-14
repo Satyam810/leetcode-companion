@@ -747,60 +747,59 @@ async function sendTelegramMessage(text) {
 }
 
 async function handleTelegramCommand(cmd) {
-  const parts = cmd.split(' ');
-  const command = parts[0].toLowerCase();
+  const cleanCmd = cmd.trim().toLowerCase();
 
-  switch (command) {
-    case '/start':
-    case '/help':
-      await sendTelegramMessage(
-        `🤖 *LeetCode Companion Bot*\n\n` +
-        `Here are the commands you can use:\n` +
-        `• /status - View current streak and solved stats\n` +
-        `• /today - Get today's daily challenge details\n` +
-        `• /solution - Fetch today's AI-generated solution code\n` +
-        `• /solve - Remotely trigger the Auto-Solve pipeline on your PC\n` +
-        `• /help - Show this list of commands`
-      );
-      break;
+  if (cleanCmd.startsWith('/start') || cleanCmd.startsWith('/help')) {
+    await sendTelegramMessage(
+      `🤖 *LeetCode Companion Bot*\n\n` +
+      `Here are the commands you can use:\n` +
+      `• /status - View current streak and solved stats\n` +
+      `• /today - Get today's daily challenge details\n` +
+      `• /question - Get today's full problem description\n` +
+      `• /solution [lang] - Fetch today's AI-generated solution (e.g. \`/solution java\`, defaults to Python)\n` +
+      `• /solve - Remotely solve today's challenge completely in the background!\n` +
+      `• /help - Show this list of commands`
+    );
+    return;
+  }
 
-    case '/status':
-      const stats = await StorageService.getStats();
-      const streak = await StorageService.getStreak();
-      const statusText = 
-        `📊 *LeetCode Companion Stats*\n\n` +
-        `🔥 *Active Streak:* ${streak.current} days (Longest: ${streak.longest})\n` +
-        `🟢 *Easy Solved:* ${stats.easy}\n` +
-        `🟡 *Medium Solved:* ${stats.medium}\n` +
-        `🔴 *Hard Solved:* ${stats.hard}\n` +
-        `⚪ *Unknown/Other:* ${stats.unknown || 0}`;
-      await sendTelegramMessage(statusText);
-      break;
+  if (cleanCmd.startsWith('/status')) {
+    const stats = await StorageService.getStats();
+    const streak = await StorageService.getStreak();
+    const statusText = 
+      `📊 *LeetCode Companion Stats*\n\n` +
+      `🔥 *Active Streak:* ${streak.current} days (Longest: ${streak.longest})\n` +
+      `🟢 *Easy Solved:* ${stats.easy}\n` +
+      `🟡 *Medium Solved:* ${stats.medium}\n` +
+      `🔴 *Hard Solved:* ${stats.hard}\n` +
+      `⚪ *Unknown/Other:* ${stats.unknown || 0}`;
+    await sendTelegramMessage(statusText);
+    return;
+  }
 
-    case '/today':
-      await sendTelegramTodayCommand();
-      break;
+  if (cleanCmd.startsWith('/today')) {
+    await sendTelegramTodayCommand();
+    return;
+  }
 
-    case '/solution':
-      await sendTelegramSolutionCommand();
-      break;
+  if (cleanCmd.startsWith('/question')) {
+    await sendTelegramQuestionCommand();
+    return;
+  }
 
-    case '/solve':
-      await sendTelegramMessage('🚀 *Triggering Auto-Solve on your desktop…*');
-      try {
-        const triggered = await runAutoSolveImmediately();
-        if (triggered) {
-          await sendTelegramMessage('✅ *Auto-solve triggered! Check your LeetCode tab.*');
-        } else {
-          await sendTelegramMessage('❌ *Failed to trigger solve.* Make sure LeetCode is reachable.');
-        }
-      } catch (err) {
-        await sendTelegramMessage(`❌ *Failed to trigger solve:* ${err.message}`);
-      }
-      break;
+  if (cleanCmd.startsWith('/solution')) {
+    const parts = cmd.split(/\s+/);
+    let lang = 'Python';
+    if (parts.length > 1) {
+      lang = parts.slice(1).join(' ');
+    }
+    await sendTelegramSolutionCommand(lang);
+    return;
+  }
 
-    default:
-      break;
+  if (cleanCmd.includes('solve')) {
+    await solveDailyChallengeInBackground();
+    return;
   }
 }
 
@@ -824,14 +823,37 @@ async function sendTelegramTodayCommand() {
   await sendTelegramMessage(text);
 }
 
-async function sendTelegramSolutionCommand() {
+async function sendTelegramQuestionCommand() {
+  await sendTelegramMessage('⏳ *Fetching today\'s challenge description…*');
+  const daily = await fetchDailyChallenge();
+  if (!daily) {
+    await sendTelegramMessage('❌ *Failed to fetch today\'s challenge.*');
+    return;
+  }
+  const description = await fetchProblemDescription(daily.titleSlug);
+  if (!description) {
+    await sendTelegramMessage('❌ *Failed to retrieve the problem description.*');
+    return;
+  }
+
+  const header = `📖 *${daily.title} (${daily.difficulty})*\n\n`;
+  const fullText = header + description;
+  if (fullText.length > 4000) {
+    await sendTelegramMessage(fullText.slice(0, 4000) + '\n\n*(Truncated due to Telegram limit)*');
+  } else {
+    await sendTelegramMessage(fullText);
+  }
+}
+
+async function sendTelegramSolutionCommand(langArg = 'Python') {
   const settings = await StorageService.getSettings();
   if (!settings.grokApiKey) {
     await sendTelegramMessage('❌ *Groq API key not configured.* Open the settings page to add it.');
     return;
   }
 
-  await sendTelegramMessage('⏳ *Generating solution via Groq LLaMA 3.3…*');
+  const targetLang = langArg.trim();
+  await sendTelegramMessage(`⏳ *Generating solution in ${targetLang} via Groq LLaMA 3.3…*`);
   const daily = await fetchDailyChallenge();
   if (!daily) {
     await sendTelegramMessage('❌ *Failed to fetch today\'s challenge.*');
@@ -844,12 +866,25 @@ async function sendTelegramSolutionCommand() {
     return;
   }
 
+  const snippets = await fetchQuestionSnippets(daily.titleSlug);
+  let templateCode = '';
+  const submitLangSlug = mapLangToLeetCodeSubmitName(targetLang);
+  if (snippets) {
+    const snippet = snippets.find(s => s.langSlug === submitLangSlug);
+    if (snippet) templateCode = snippet.code;
+  }
+
   try {
     const grok = new GrokAPI(settings.grokApiKey);
+    const templateHint = templateCode 
+      ? `You MUST write your solution inside this exact class/method structure:\n\`\`\`\n${templateCode}\n\`\`\`\n`
+      : '';
+
     const messages = [
       {
         role: 'system',
-        content: 'You are an expert software engineer. Generate the optimal solution code for the LeetCode problem. Return ONLY the code block inside standard markdown fences (e.g., ```python) without any conversational introduction or conclusion.'
+        content: `You are an expert software engineer. Generate the optimal solution code in ${targetLang} for the LeetCode problem.
+${templateHint}Return ONLY the code block inside standard markdown fences (e.g., \`\`\`) without any conversational introduction or conclusion.`
       },
       {
         role: 'user',
@@ -858,10 +893,219 @@ async function sendTelegramSolutionCommand() {
     ];
     const codeResponse = await grok.generateChat(messages, { maxTokens: 1500, temperature: 0.2 });
     
-    await sendTelegramMessage(`💡 *Optimal AI Solution for "${daily.title}" (${daily.difficulty}):*`);
+    await sendTelegramMessage(`💡 *Optimal AI Solution in ${targetLang} for "${daily.title}":*`);
     await sendTelegramMessage(codeResponse);
   } catch (err) {
     await sendTelegramMessage(`❌ *Failed to generate solution:* ${err.message}`);
+  }
+}
+
+async function getLeetCodeCsrfToken() {
+  return new Promise(resolve => {
+    chrome.cookies.get({ url: 'https://leetcode.com', name: 'csrftoken' }, cookie => {
+      resolve(cookie ? cookie.value : '');
+    });
+  });
+}
+
+function mapLangToLeetCodeSubmitName(lang) {
+  const l = (lang || 'python3').toLowerCase().trim();
+  if (l.includes('python') || l === 'py') return 'python3';
+  if (l.includes('cpp') || l === 'c++') return 'cpp';
+  if (l.includes('java')) return 'java';
+  if (l.includes('javascript') || l === 'js') return 'javascript';
+  if (l.includes('typescript') || l === 'ts') return 'typescript';
+  if (l.includes('golang') || l === 'go') return 'golang';
+  if (l.includes('csharp') || l === 'c#') return 'csharp';
+  if (l.includes('rust')) return 'rust';
+  return l;
+}
+
+async function fetchQuestionSnippets(slug) {
+  try {
+    const res = await fetch('https://leetcode.com/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `query questionEditorData($titleSlug: String!) {
+          question(titleSlug: $titleSlug) {
+            questionId
+            codeSnippets {
+              lang
+              langSlug
+              code
+            }
+          }
+        }`,
+        variables: { titleSlug: slug }
+      })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.data?.question?.codeSnippets || [];
+  } catch (err) {
+    console.warn('[LC-Companion SW] fetchQuestionSnippets warning:', err);
+    return null;
+  }
+}
+
+async function solveDailyChallengeInBackground() {
+  await sendTelegramMessage('⏳ *Starting background Auto-Solver…*');
+
+  const daily = await fetchDailyChallenge();
+  if (!daily) {
+    await sendTelegramMessage('❌ *Failed to fetch today\'s challenge.*');
+    return;
+  }
+
+  if (daily.userStatus === 'Finish') {
+    await sendTelegramMessage('✅ *Today\'s challenge is already solved!* Streak is safe.');
+    return;
+  }
+
+  const description = await fetchProblemDescription(daily.titleSlug);
+  if (!description) {
+    await sendTelegramMessage('❌ *Failed to retrieve the problem description.*');
+    return;
+  }
+
+  const snippets = await fetchQuestionSnippets(daily.titleSlug);
+  let templateCode = '';
+  // Default background solve language to python3
+  if (snippets) {
+    const snippet = snippets.find(s => s.langSlug === 'python3');
+    if (snippet) templateCode = snippet.code;
+  }
+
+  if (!templateCode) {
+    await sendTelegramMessage('❌ *Failed to retrieve LeetCode code snippets.*');
+    return;
+  }
+
+  await sendTelegramMessage('🧠 *Asking Groq LLaMA 3.3 to write optimal solution code…*');
+  let generatedCode = '';
+  try {
+    const settings = await StorageService.getSettings();
+    const grok = new GrokAPI(settings.grokApiKey);
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert competitive programmer. Write the optimal solution code in Python 3 for the LeetCode problem.
+You MUST write your solution inside this exact class/method structure:
+\`\`\`python
+${templateCode}
+\`\`\`
+Return ONLY the raw executable python3 code block inside markdown fences (e.g. \`\`\`python). Do not add comments inside the code block.`
+      },
+      {
+        role: 'user',
+        content: `Problem Title: ${daily.title}\nDescription:\n${description}`
+      }
+    ];
+    const codeResponse = await grok.generateChat(messages, { maxTokens: 1500, temperature: 0.2 });
+
+    const match = codeResponse.match(/```(?:python|py)?([\s\S]*?)```/i);
+    generatedCode = match ? match[1].trim() : codeResponse.trim();
+  } catch (err) {
+    await sendTelegramMessage(`❌ *AI Generation failed:* ${err.message}`);
+    return;
+  }
+
+  if (!generatedCode) {
+    await sendTelegramMessage('❌ *No code was generated by the AI.*');
+    return;
+  }
+
+  await sendTelegramMessage('🚀 *Submitting code directly to LeetCode API…*');
+  try {
+    const csrfToken = await getLeetCodeCsrfToken();
+    if (!csrfToken) {
+      throw new Error('Could not find active LeetCode session. Make sure you are logged in to leetcode.com on Chrome.');
+    }
+
+    const snippetsData = await fetch('https://leetcode.com/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `query questionTitle($titleSlug: String!) {
+          question(titleSlug: $titleSlug) {
+            questionId
+          }
+        }`,
+        variables: { titleSlug: daily.titleSlug }
+      })
+    });
+    const parsedSnippet = await snippetsData.json();
+    const questionId = parsedSnippet.data?.question?.questionId;
+
+    if (!questionId) {
+      throw new Error('Could not retrieve LeetCode question ID.');
+    }
+
+    const submitUrl = `https://leetcode.com/problems/${daily.titleSlug}/submit/`;
+    const res = await fetch(submitUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-csrftoken': csrfToken,
+        'Referer': `https://leetcode.com/problems/${daily.titleSlug}/`
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        lang: 'python3',
+        question_id: questionId,
+        typed_code: generatedCode
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} submission error`);
+    }
+
+    const data = await res.json();
+    const submissionId = data.submission_id;
+    if (!submissionId) {
+      throw new Error('No submission ID returned. Session might be expired.');
+    }
+
+    await sendTelegramMessage('⏳ *Waiting for compiler verdict…*');
+    let verdict = null;
+    for (let i = 0; i < 15; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      const checkRes = await fetch(`https://leetcode.com/submissions/detail/${submissionId}/check/`, {
+        credentials: 'include'
+      });
+      if (!checkRes.ok) continue;
+      const checkData = await checkRes.json();
+      if (checkData.state === 'SUCCESS') {
+        verdict = checkData;
+        break;
+      }
+    }
+
+    if (!verdict) {
+      throw new Error('Compilation timeout.');
+    }
+
+    if (verdict.status_msg === 'Accepted') {
+      await sendTelegramMessage('✅ *LeetCode Accepted!* Syncing to GitHub…');
+      await handleAcceptedSubmission({
+        title: daily.title,
+        difficulty: daily.difficulty,
+        language: 'py',
+        code: generatedCode,
+        slug: daily.titleSlug
+      }, () => {});
+    } else {
+      let failDetails = verdict.status_msg;
+      if (verdict.compile_error) {
+        failDetails = `Compile Error: ${verdict.compile_error}`;
+      }
+      throw new Error(`Verdict: ${failDetails}`);
+    }
+
+  } catch (err) {
+    await sendTelegramMessage(`❌ *Background solver failed:* ${err.message}`);
   }
 }
 
@@ -902,7 +1146,6 @@ function initTelegramPolling() {
     clearInterval(telegramPollingInterval);
     telegramPollingInterval = null;
   }
-  // Check updates every 30 seconds
   telegramPollingInterval = setInterval(pollTelegramUpdates, 30000);
   pollTelegramUpdates();
 }
@@ -910,7 +1153,6 @@ function initTelegramPolling() {
 // Initialize on startup
 initTelegramPolling();
 
-// Re-init polling when settings are changed
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'sync') {
     if (changes.telegramEnabled || changes.telegramBotToken || changes.telegramChatId) {

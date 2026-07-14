@@ -5,7 +5,8 @@
   "description": "LeetCode Companion – auto-sync solutions to GitHub and get AI-powered hints",
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "cookies"
   ],
   "host_permissions": [
     "https://leetcode.com/*",
