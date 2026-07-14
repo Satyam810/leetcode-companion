@@ -59,6 +59,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name === 'streak-protection-alarm') {
     checkStreakProtection();
+    // Keep Telegram updates polling active
+    startTelegramLongPoll();
   }
 });
 
@@ -801,6 +803,35 @@ async function handleTelegramCommand(cmd) {
     await solveDailyChallengeInBackground();
     return;
   }
+
+  // Conversational AI chatbot fallback for all other messages!
+  try {
+    const settings = await StorageService.getSettings();
+    if (settings.grokApiKey) {
+      await sendTelegramMessage('🤖 *Thinking…*');
+      const grok = new GrokAPI(settings.grokApiKey);
+      const daily = await fetchDailyChallenge();
+      const dailyDesc = daily ? await fetchProblemDescription(daily.titleSlug) : '';
+
+      const systemPrompt = `You are LeetCode Companion Assistant. Help the user with LeetCode questions, solution code, algorithms, and career advice.
+Current Daily Challenge: ${daily ? daily.title + ' (' + daily.difficulty + ')' : 'None'}.
+Description:
+${dailyDesc}
+
+Format your response in beautiful, copy-pasteable Markdown. Keep your replies concise and clean.`;
+
+      const reply = await grok.generateChat([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: cmd }
+      ], { maxTokens: 1000 });
+
+      await sendTelegramMessage(reply);
+    } else {
+      await sendTelegramMessage('❓ *Unrecognized command.* Type `/help` to see available commands.');
+    }
+  } catch (err) {
+    await sendTelegramMessage(`❌ *AI chatbot error:* ${err.message}`);
+  }
 }
 
 async function sendTelegramTodayCommand() {
@@ -1109,45 +1140,64 @@ Return ONLY the raw executable python3 code block inside markdown fences (e.g. \
   }
 }
 
-async function pollTelegramUpdates() {
-  try {
+let isPolling = false;
+let isQueueCleared = false;
+
+async function startTelegramLongPoll() {
+  if (isPolling) return;
+  isPolling = true;
+
+  while (true) {
     const settings = await StorageService.getSettings();
     if (!settings.telegramEnabled || !settings.telegramBotToken || !settings.telegramChatId) {
-      if (telegramPollingInterval) {
-        clearInterval(telegramPollingInterval);
-        telegramPollingInterval = null;
-      }
-      return;
+      isPolling = false;
+      break;
     }
 
-    const res = await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/getUpdates?offset=${lastTelegramUpdateId + 1}&timeout=10`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.ok || !data.result || data.result.length === 0) return;
+    // Clear the queue on startup so it doesn't respond to old messages
+    if (!isQueueCleared) {
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/getUpdates?limit=10`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.result && data.result.length > 0) {
+            lastTelegramUpdateId = data.result[data.result.length - 1].update_id;
+          }
+        }
+      } catch (e) {
+        console.warn('[LC-Companion SW] Queue clearing failed:', e);
+      }
+      isQueueCleared = true;
+      continue;
+    }
 
-    for (const update of data.result) {
-      lastTelegramUpdateId = update.update_id;
-      const message = update.message;
-      if (!message || !message.text) continue;
-
-      if (String(message.chat.id) !== String(settings.telegramChatId)) {
+    try {
+      // Long poll request: wait up to 25 seconds for new messages
+      const res = await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/getUpdates?offset=${lastTelegramUpdateId + 1}&timeout=25`);
+      if (!res.ok) {
+        await new Promise(r => setTimeout(r, 5000));
         continue;
       }
-
-      await handleTelegramCommand(message.text.trim());
+      const data = await res.json();
+      if (data.ok && data.result && data.result.length > 0) {
+        for (const update of data.result) {
+          lastTelegramUpdateId = update.update_id;
+          const message = update.message;
+          if (message && message.text && String(message.chat.id) === String(settings.telegramChatId)) {
+            await handleTelegramCommand(message.text.trim());
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[LC-Companion SW] Telegram polling loop warning:', err);
+      await new Promise(r => setTimeout(r, 5000));
     }
-  } catch (err) {
-    console.warn('[LC-Companion SW] pollTelegramUpdates warning:', err);
   }
 }
 
 function initTelegramPolling() {
-  if (telegramPollingInterval) {
-    clearInterval(telegramPollingInterval);
-    telegramPollingInterval = null;
-  }
-  telegramPollingInterval = setInterval(pollTelegramUpdates, 30000);
-  pollTelegramUpdates();
+  isQueueCleared = false; // Reset queue state
+  startTelegramLongPoll();
 }
 
 // Initialize on startup
