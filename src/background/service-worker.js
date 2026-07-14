@@ -814,11 +814,18 @@ async function handleTelegramCommand(cmd) {
       const dailyDesc = daily ? await fetchProblemDescription(daily.titleSlug) : '';
 
       const systemPrompt = `You are LeetCode Companion Assistant. Help the user with LeetCode questions, solution code, algorithms, and career advice.
-Current Daily Challenge: ${daily ? daily.title + ' (' + daily.difficulty + ')' : 'None'}.
-Description:
-${dailyDesc}
 
-Format your response in beautiful, copy-pasteable Markdown. Keep your replies concise and clean.`;
+Current Daily Challenge Context:
+- Title: ${daily ? daily.title + ' (' + daily.difficulty + ')' : 'None'}
+- Slug: ${daily ? daily.titleSlug : ''}
+- Description: ${dailyDesc}
+
+Guidelines:
+1. Do NOT solve, explain, or output the solution for the current daily challenge unless the user explicitly asks for the solution or asks you to solve it.
+2. If the user just greets you (e.g., "hi", "hello", "hii", "hey", "how are you"), reply with a brief, friendly greeting, introduce yourself as their LeetCode Companion, and ask how you can help. Keep it very conversational and short.
+3. If the user asks for today's challenge details or description, provide a summary of the problem statement and its difficulty.
+4. If they ask for the solution or optimal code, write the optimal code inside clean markdown fences.
+5. Format your response in beautiful, copy-pasteable Markdown. Keep your replies concise and clean.`;
 
       const reply = await grok.generateChat([
         { role: 'system', content: systemPrompt },
