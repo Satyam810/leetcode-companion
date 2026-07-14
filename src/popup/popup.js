@@ -183,8 +183,10 @@ async function init() {
   // Try to sync real statistics from LeetCode
   chrome.runtime.sendMessage({ type: 'SYNC_LEETCODE_STATS' }, () => {
     loadStats();
-    chrome.storage.local.get(['sessionExpired'], (data) => {
-      if (data.sessionExpired) {
+    chrome.storage.local.get(['sessionExpired', 'solveStatus'], (data) => {
+      if (data.solveStatus) {
+        setStatus({ active: true, text: '⚡ Auto-Solver Active', sub: data.solveStatus });
+      } else if (data.sessionExpired) {
         setStatus({ active: false, text: '⚠️ Session Expired!', sub: 'Please sign in to leetcode.com first.' });
       }
     });
@@ -199,8 +201,10 @@ async function init() {
       btn.style.transform = 'none';
       btn.style.transition = 'none';
       loadStats();
-      chrome.storage.local.get(['sessionExpired'], (data) => {
-        if (data.sessionExpired) {
+      chrome.storage.local.get(['sessionExpired', 'solveStatus'], (data) => {
+        if (data.solveStatus) {
+          setStatus({ active: true, text: '⚡ Auto-Solver Active', sub: data.solveStatus });
+        } else if (data.sessionExpired) {
           setStatus({ active: false, text: '⚠️ Session Expired!', sub: 'Please sign in to leetcode.com first.' });
         }
       });
@@ -254,14 +258,12 @@ async function init() {
       <line x1="18" y1="12" x2="22" y2="12"/>
       <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
       <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
-    </svg> Launching...`;
+    </svg> Solving...`;
     chrome.runtime.sendMessage({ type: 'FORCE_RUN_AUTO_SOLVE' }, () => {
-      // Re-enable and close
       setTimeout(() => {
         btn.innerHTML = oldHtml;
         btn.disabled = false;
-        window.close();
-      }, 300);
+      }, 5000);
     });
   });
 
@@ -269,6 +271,24 @@ async function init() {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local') {
       if (changes.stats || changes.streak)  loadStats();
+      if (changes.solveStatus) {
+        if (changes.solveStatus.newValue) {
+          setStatus({ active: true, text: '⚡ Auto-Solver Active', sub: changes.solveStatus.newValue });
+        } else {
+          // Reload status by detecting current tab context again
+          detectLeetCodeTab().then(result => {
+            if (!result) {
+              setStatus({ active: false, text: 'No active tab', sub: 'Open Chrome and try again' });
+            } else if (result.isProblem) {
+              setStatus({ active: true,  text: 'LeetCode Problem Detected!', sub: result.tab.title || result.tab.url });
+            } else if (result.isLeetCode) {
+              setStatus({ active: false, text: 'On LeetCode', sub: 'Go to a problem page to use AI features' });
+            } else {
+              setStatus({ active: false, text: 'Not on LeetCode', sub: 'Visit leetcode.com/problems/ to start' });
+            }
+          });
+        }
+      }
     }
     if (area === 'sync') {
       if (changes.streakProtect || changes.streakProtectHour || changes.streakProtectMinute || changes.streakProtectAmPm) {

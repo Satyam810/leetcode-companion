@@ -144,6 +144,40 @@ Every synced solution is enriched and organized with clean file headers containi
 └── ... (auto-organized by problem slug)
 ```
 
+---
+
+### 4. Remote Telegram Bot Control
+*Control your companion, fetch stats, or submit custom code directly from Telegram.*
+
+LeetCode Companion features a built-in serverless Telegram poller that processes commands directly from your whitelisted chat ID:
+
+- **Commands Supported:**
+  - `/status` — View your current streak, overall progress, and difficulty stats.
+  - `/today` — Get today's daily challenge title and solve status.
+  - `/question` — Get the full problem description, example testcases, and constraints.
+  - `/solution` — Fetches an optimal, accepted Python/Java/JS/C++ solution from Groq.
+  - `/solve` — Remote-triggers the headless background solver on your desktop browser.
+- **Custom Code Submission:** Just paste your custom Python solution into Telegram bot chat (with or without markdown fences) and it will detect the code, bypass Groq generation, and submit your code directly for Attempt 1!
+
+---
+
+### 5. Closed-Loop AI Self-Correction Debugger
+*True agentic debugging — resolving its own errors and constraints.*
+
+If a code submission fails, the solver will not give up. It enters a closed-loop debugging cycle:
+
+- **Failed Testcase Extraction:** On a `Wrong Answer` verdict, it extracts the failed input, output, and expected results directly from LeetCode's compiler response.
+- **Exceptions Scraper:** Detects `Memory Limit Exceeded (MLE)`, `Output Limit Exceeded (OLE)`, `Time Limit Exceeded (TLE)`, `Runtime Error`, and `Compile Error`.
+- **Groq Self-Correction Loop:** Feeds the error details and the previous code back to the Groq API. Groq analyzes the logic bug, corrects the code, and submits the updated version. The loop runs for up to **3 attempts** until the submission is `Accepted`.
+
+---
+
+### 6. Synchronous Semaphore Tab Guard
+*Single-tab safety locks for race-free background execution.*
+
+- **Thread Locks:** Uses a synchronous global mutex lock in the background service worker to prevent duplicate tab creation and race conditions from double clicks or concurrent alarm events.
+- **Event-Driven Resets:** Active listener on `chrome.tabs.onRemoved` automatically resets the solver locks and clears cache logs if the background solver tab is closed.
+
 <br />
 
 ---

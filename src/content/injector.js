@@ -1566,9 +1566,9 @@
       clearTimeout(pollTimer);
       pollTimer = setTimeout(() => {
         clearInterval(pollInterval);
-        setContent(`<div class="lc-alert lc-alert-err">⚠️ Submission timeout. Please check your submission tab on LeetCode.</div>`);
+        setContent(`<div class="lc-alert lc-alert-err">⚠️ Submission timeout. LeetCode took longer than 120 seconds to judge the submission. Please check your submission tab on LeetCode.</div>`);
         chatBar.classList.add('active');
-      }, 45000);
+      }, 120000);
 
       clearInterval(pollInterval);
       pollInterval = setInterval(() => {
@@ -1622,24 +1622,32 @@
 
     function extractCodeFromExplanation(text) {
       if (!text) return '';
-      // Look for code block under 'Complete Solution' or 'LeetCode-Ready'
+      
+      const matches = [...text.matchAll(/```(?:\w*)\n([\s\S]*?)```/g)].map(m => m[1].trim());
+      if (matches.length === 0) return '';
+      
+      // Look for the block containing 'class Solution' (standard LeetCode class template format)
+      for (const block of matches) {
+        if (block.includes('class Solution')) {
+          return block;
+        }
+      }
+      
+      // Fallback 1: Look for code block under 'Complete Solution' or 'LeetCode-Ready' header
       const sectionMatch = text.match(/## (?:Complete Solution|LeetCode-Ready)[\s\S]*?(```(?:\w*)\n([\s\S]*?)```)/i);
       if (sectionMatch) {
         return sectionMatch[2].trim();
       }
-      // Fallback: match the last code block (Complete Solution is always near the end)
-      const matches = [...text.matchAll(/```(?:\w*)\n([\s\S]*?)```/g)];
-      if (matches.length > 0) {
-        return matches[matches.length - 1][1].trim();
-      }
-      return '';
+      
+      // Fallback 2: return the first code block (solution class is usually written first)
+      return matches[0];
     }
 
     function getSubmissionStatus() {
-      const textElements = document.querySelectorAll('span, div, p, a');
-      for (const el of textElements) {
+      // 1. Check globally for error statuses (no collisions possible on a clean problem page)
+      const allElements = document.querySelectorAll('span, div, p, a');
+      for (const el of allElements) {
         const txt = el.textContent.trim();
-        if (txt === 'Accepted') return { status: 'ACCEPTED' };
         if (txt === 'Wrong Answer') {
           return { status: 'WRONG_ANSWER', details: scrapeWrongAnswerDetails() };
         }
@@ -1651,6 +1659,28 @@
         }
         if (txt === 'Time Limit Exceeded') {
           return { status: 'TIME_LIMIT_EXCEEDED', details: 'Time Limit Exceeded (code was too slow).' };
+        }
+        if (txt === 'Memory Limit Exceeded') {
+          return { status: 'MEMORY_LIMIT_EXCEEDED', details: 'Memory Limit Exceeded (code used too much memory).' };
+        }
+        if (txt === 'Output Limit Exceeded') {
+          return { status: 'OUTPUT_LIMIT_EXCEEDED', details: 'Output Limit Exceeded (code printed too much text).' };
+        }
+      }
+
+      // 2. Check strictly for "Accepted" within submission-specific selectors to avoid collisions with static page text
+      const acceptedCandidates = document.querySelectorAll(
+        '[data-e2e-locator="submission-result"], ' +
+        '[class*="result-status"], ' +
+        '[class*="status__"], ' +
+        '[class*="verdict__"], ' +
+        'div[class*="result"] span, ' +
+        'div[class*="submission"] span, ' +
+        '[class*="success"]'
+      );
+      for (const el of acceptedCandidates) {
+        if (el.textContent.trim() === 'Accepted') {
+          return { status: 'ACCEPTED' };
         }
       }
       return null;
@@ -1926,7 +1956,7 @@
     // Check for auto-solve flag in local storage (resilient to SPA router stripping hash)
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime?.id) {
-        chrome.storage.local.get(['autoSolveSlug', 'backgroundSolveSlug'], (data) => {
+        chrome.storage.local.get(['autoSolveSlug'], (data) => {
           if (chrome.runtime?.lastError) return;
           const currentSlug = getProblemSlug();
           if (data.autoSolveSlug && data.autoSolveSlug === currentSlug) {
@@ -1935,13 +1965,22 @@
               doAutoSolveLoop();
             }, 3000);
           }
-          if (data.backgroundSolveSlug && data.backgroundSolveSlug === currentSlug) {
-            chrome.storage.local.remove(['backgroundSolveSlug']);
-            setTimeout(() => {
-              runHeadlessSolveOnPage(currentSlug);
-            }, 1000);
-          }
         });
+      }
+    } catch (err) {}
+
+    // Check for background-solve flag in URL query parameters
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('backgroundSolve') === 'true') {
+        // Strip the parameter immediately so it doesn't run again if refreshed
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+
+        const currentSlug = getProblemSlug();
+        setTimeout(() => {
+          runHeadlessSolveOnPage(currentSlug);
+        }, 1000);
       }
     } catch (err) {}
 
@@ -1984,6 +2023,7 @@
   setupListeners();
 
   async function runHeadlessSolveOnPage(slug) {
+    const statusEl = document.getElementById('lc-db-streak-status');
     try {
       const title = document.querySelector('[class*="text-title-large"]')?.innerText || document.title;
       const description = getDescription();
@@ -1999,26 +2039,71 @@
         throw new Error('Could not find Python 3 code template.');
       }
 
-      chrome.runtime.sendMessage({
-        type: 'GENERATE_BACKGROUND_CODE',
-        payload: { title, description, templateCode }
-      }, async (response) => {
-        if (!response || !response.success || !response.code) {
-          await notifyBackgroundSolverFailed(response?.error || 'AI generation failed');
-          closeSelfTab();
-          return;
+      const csrfToken = getCookie('csrftoken');
+      const questionId = await fetchQuestionIdGraphQL(slug);
+
+      if (!csrfToken || !questionId) {
+        const errStr = 'Missing CSRF token or Question ID. Please log in.';
+        chrome.storage.local.set({ solveStatus: errStr });
+        if (statusEl) statusEl.textContent = errStr;
+        await notifyBackgroundSolverFailed(errStr);
+        closeSelfTab();
+        return;
+      }
+
+      let attempt = 0;
+      const maxAttempts = 3;
+      let previousCode = '';
+      let previousFeedback = '';
+
+      while (attempt < maxAttempts) {
+        attempt++;
+        
+        const statusMsg = `Attempt ${attempt}/${maxAttempts}: Solving...`;
+        chrome.storage.local.set({ solveStatus: statusMsg });
+        if (statusEl) statusEl.textContent = statusMsg;
+
+        // Broadcast current attempt to Telegram status
+        chrome.runtime.sendMessage({
+          type: 'BACKGROUND_SOLVE_ATTEMPT',
+          payload: { attempt, maxAttempts }
+        });
+
+        // Request code generation (checks if custom code is present in storage for Attempt 1)
+        let generatedCode = '';
+        const localData = await new Promise(resolve => {
+          chrome.storage.local.get(['backgroundSolveCustomCode'], resolve);
+        });
+
+        if (attempt === 1 && localData?.backgroundSolveCustomCode) {
+          generatedCode = localData.backgroundSolveCustomCode;
+          chrome.storage.local.remove(['backgroundSolveCustomCode']); // Clear it so it isn't reused next time
+        } else {
+          const response = await new Promise(resolve => {
+            chrome.runtime.sendMessage({
+              type: 'GENERATE_BACKGROUND_CODE',
+              payload: { title, description, templateCode, attempt, previousFeedback, previousCode }
+            }, resolve);
+          });
+
+          if (!response || !response.success || !response.code) {
+            const errStr = response?.error || 'AI generation failed';
+            chrome.storage.local.set({ solveStatus: `Attempt ${attempt}/${maxAttempts} failed: ${errStr}` });
+            if (statusEl) statusEl.textContent = `Attempt ${attempt}/${maxAttempts} failed: ${errStr}`;
+            await notifyBackgroundSolverFailed(errStr);
+            closeSelfTab();
+            return;
+          }
+          generatedCode = response.code;
         }
 
-        const generatedCode = response.code;
-        const csrfToken = getCookie('csrftoken');
-        const questionId = await fetchQuestionIdGraphQL(slug);
+        previousCode = generatedCode; // Store the code generated in this attempt for subsequent retries
 
-        if (!csrfToken || !questionId) {
-          await notifyBackgroundSolverFailed('Missing CSRF token or Question ID. Please log in.');
-          closeSelfTab();
-          return;
-        }
+        const submitMsg = `Attempt ${attempt}/${maxAttempts}: Submitting...`;
+        chrome.storage.local.set({ solveStatus: submitMsg });
+        if (statusEl) statusEl.textContent = submitMsg;
 
+        // Submit solution
         const submitRes = await fetch(`/problems/${slug}/submit/`, {
           method: 'POST',
           headers: {
@@ -2033,22 +2118,25 @@
         });
 
         if (!submitRes.ok) {
-          await notifyBackgroundSolverFailed(`HTTP ${submitRes.status} submission error`);
-          closeSelfTab();
-          return;
+          previousFeedback = `HTTP ${submitRes.status} submission error`;
+          continue;
         }
 
         const submitData = await submitRes.json();
         const submissionId = submitData.submission_id;
 
         if (!submissionId) {
-          await notifyBackgroundSolverFailed('No submission ID returned by LeetCode.');
-          closeSelfTab();
-          return;
+          previousFeedback = 'No submission ID returned by LeetCode.';
+          continue;
         }
 
+        // Poll compiler verdict (increased timeout to 120 seconds for Hard problems)
         let verdict = null;
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 60; i++) {
+          const waitMsg = `Attempt ${attempt}/${maxAttempts}: Compiling (${i * 2}s)...`;
+          chrome.storage.local.set({ solveStatus: waitMsg });
+          if (statusEl) statusEl.textContent = waitMsg;
+
           await new Promise(r => setTimeout(r, 2000));
           const checkRes = await fetch(`/submissions/detail/${submissionId}/check/`);
           if (!checkRes.ok) continue;
@@ -2060,12 +2148,16 @@
         }
 
         if (!verdict) {
-          await notifyBackgroundSolverFailed('Compilation timed out.');
-          closeSelfTab();
-          return;
+          previousFeedback = 'Compilation timed out (LeetCode took longer than 120 seconds to judge).';
+          continue;
         }
 
         if (verdict.status_msg === 'Accepted') {
+          const successMsg = `Accepted on Attempt ${attempt}/${maxAttempts}! Syncing...`;
+          chrome.storage.local.set({ solveStatus: successMsg });
+          if (statusEl) statusEl.textContent = successMsg;
+
+          // Success: Sync to GitHub and stop retrying
           chrome.runtime.sendMessage({
             type: 'BACKGROUND_SOLVE_ACCEPTED',
             payload: {
@@ -2075,19 +2167,58 @@
               slug: slug
             }
           });
+          
+          setTimeout(() => {
+            chrome.storage.local.remove(['solveStatus']);
+          }, 5000);
+          closeSelfTab();
+          return;
         } else {
           let failDetails = verdict.status_msg;
           if (verdict.compile_error) {
             failDetails = `Compile Error: ${verdict.compile_error}`;
+          } else if (verdict.status_msg === 'Wrong Answer') {
+            const passed = verdict.total_correct || 0;
+            const total = verdict.total_testcases || 0;
+            failDetails = `Wrong Answer (passed ${passed}/${total} testcases).\n` +
+                          `Failed Testcase Input: ${verdict.last_testcase || ''}\n` +
+                          `Your Output: ${verdict.code_output || ''}\n` +
+                          `Expected Output: ${verdict.expected_output || ''}`;
+          } else if (verdict.status_msg === 'Runtime Error') {
+            failDetails = `Runtime Error: ${verdict.runtime_error || ''}`;
           }
-          await notifyBackgroundSolverFailed(`Verdict: ${failDetails}`);
-        }
+          
+          previousFeedback = failDetails;
+          
+          const failMsg = `Attempt ${attempt}/${maxAttempts} failed: ${verdict.status_msg}`;
+          chrome.storage.local.set({ solveStatus: failMsg });
+          if (statusEl) statusEl.textContent = failMsg;
 
-        closeSelfTab();
-      });
+          // Wait 3 seconds before next self-correcting retry
+          await new Promise(r => setTimeout(r, 3000));
+        }
+      }
+
+      // If we exited the loop, it failed all 3 attempts
+      const finalErr = `Failed after ${maxAttempts} attempts. Final: ${previousFeedback}`;
+      chrome.storage.local.set({ solveStatus: finalErr });
+      if (statusEl) statusEl.textContent = finalErr;
+
+      await notifyBackgroundSolverFailed(`Failed after ${maxAttempts} attempts. Final feedback: ${previousFeedback}`);
+      
+      setTimeout(() => {
+        chrome.storage.local.remove(['solveStatus']);
+      }, 7000);
+      closeSelfTab();
 
     } catch (err) {
+      chrome.storage.local.set({ solveStatus: `Error: ${err.message}` });
+      if (statusEl) statusEl.textContent = `Error: ${err.message}`;
       await notifyBackgroundSolverFailed(err.message);
+      
+      setTimeout(() => {
+        chrome.storage.local.remove(['solveStatus']);
+      }, 5000);
       closeSelfTab();
     }
   }

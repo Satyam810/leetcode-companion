@@ -47,7 +47,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case 'FORCE_RUN_AUTO_SOLVE':
-      runAutoSolveImmediately().then(() => sendResponse({ success: true }));
+      chrome.storage.local.remove(['lastAutoSolvedDate'], () => {
+        solveDailyChallengeInBackground().then(() => sendResponse({ success: true }));
+      });
       return true;
 
     case 'GENERATE_BACKGROUND_CODE':
@@ -60,6 +62,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'BACKGROUND_SOLVE_FAILED':
       handleBackgroundSolveFailed(message.payload, sendResponse);
+      return true;
+
+    case 'BACKGROUND_SOLVE_ATTEMPT':
+      handleBackgroundSolveAttempt(message.payload, sendResponse);
       return true;
 
     case 'CLOSE_BACKGROUND_TAB':
@@ -818,7 +824,36 @@ async function handleTelegramCommand(cmd) {
     return;
   }
 
-  if (cleanCmd.includes('solve')) {
+  // Detect if user provided a custom Python code submission (case-insensitive & spacing-robust)
+  let customCode = '';
+  const codeBlockMatch = cmd.match(/```(?:python|py|python3)?([\s\S]*?)```/i);
+  if (codeBlockMatch) {
+    customCode = codeBlockMatch[1].trim();
+  } else {
+    const solutionMatch = cmd.match(/class\s+Solution/i);
+    if (solutionMatch) {
+      let startIdx = solutionMatch.index;
+      // Capture preceding imports if present
+      const beforeStr = cmd.substring(0, startIdx);
+      const lines = beforeStr.split('\n');
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i].trim();
+        if (line.toLowerCase().startsWith('import ') || line.toLowerCase().startsWith('from ')) {
+          const lIdx = cmd.indexOf(line);
+          if (lIdx !== -1 && lIdx < startIdx) {
+            startIdx = lIdx;
+          }
+        }
+      }
+      customCode = cmd.substring(startIdx).trim();
+    }
+  }
+
+  if (cleanCmd.includes('solve') || customCode) {
+    if (customCode) {
+      await chrome.storage.local.set({ backgroundSolveCustomCode: customCode });
+      await sendTelegramMessage('*Custom Python code detected. Submitting your code directly for Attempt 1...*');
+    }
     await solveDailyChallengeInBackground();
     return;
   }
@@ -941,7 +976,10 @@ async function sendTelegramSolutionCommand(langArg = 'Python') {
     const messages = [
       {
         role: 'system',
-        content: `You are an expert software engineer. Generate the optimal solution code in ${targetLang} for the LeetCode problem.
+        content: `You are a world-class competitive programming master who has solved thousands of LeetCode challenges.
+Generate the absolute most optimal, accepted solution code in ${targetLang} for the LeetCode problem.
+Your code must pass all test cases (including very large inputs and edge cases) without Time Limit Exceeded (TLE) or Memory Limit Exceeded (MLE) errors.
+Analyze the problem constraints: if N is large (e.g. N >= 100), do NOT use O(2^N) brute force, exponential recursion, or naive DFS/BFS. Instead, use an optimal algorithm (like Dynamic Programming, Math, Memoization, or Hash Maps) with polynomial or linear complexity.
 ${templateHint}Return ONLY the code block inside standard markdown fences (e.g., \`\`\`) without any conversational introduction or conclusion.`
       },
       {
@@ -1011,25 +1049,35 @@ async function fetchQuestionSnippets(slug) {
   }
 }
 
+let isBackgroundSolveInProgress = false;
+
 async function solveDailyChallengeInBackground() {
+  if (isBackgroundSolveInProgress) {
+    console.log('[LC-Companion SW] Background solve already in progress. Ignoring duplicate trigger.');
+    return;
+  }
+  isBackgroundSolveInProgress = true;
+
   await sendTelegramMessage('*Starting background Auto-Solver...*');
 
   const daily = await fetchDailyChallenge();
   if (!daily) {
     await sendTelegramMessage('*Failed to fetch today\'s challenge.*');
+    isBackgroundSolveInProgress = false;
     return;
   }
 
   if (daily.userStatus === 'Finish') {
     await sendTelegramMessage('✅ *Today\'s challenge is already solved!* Streak is safe.');
+    isBackgroundSolveInProgress = false;
     return;
   }
 
   await sendTelegramMessage('*Initiating headless solver via background tab...*');
 
-  // Open the tab in the background (active: false)
+  // Open the tab in the background (active: false) with a specific query flag
   chrome.tabs.create({
-    url: `https://leetcode.com/problems/${daily.titleSlug}/`,
+    url: `https://leetcode.com/problems/${daily.titleSlug}/?backgroundSolve=true`,
     active: false
   }, tab => {
     chrome.storage.local.set({ 
@@ -1046,24 +1094,45 @@ async function handleGenerateBackgroundCode(payload, sendResponse) {
       return sendResponse({ success: false, error: 'Groq API key not configured.' });
     }
 
-    await sendTelegramMessage('*Generating optimal solution code via Groq LLaMA 3.3...*');
-
     const grok = new GrokAPI(settings.grokApiKey);
     const messages = [
       {
         role: 'system',
-        content: `You are an expert competitive programmer. Write the optimal solution code in Python 3 for the LeetCode problem.
+        content: `You are a world-class competitive programming master who has solved thousands of LeetCode challenges.
+Write the absolute most optimal, accepted solution code in Python 3 for the LeetCode problem.
+Your code must pass all test cases (including very large inputs and edge cases) without Time Limit Exceeded (TLE) or Memory Limit Exceeded (MLE) errors.
+Analyze the problem constraints: if N is large (e.g. N >= 100), do NOT use O(2^N) brute force, exponential recursion, or naive DFS/BFS. Instead, use an optimal algorithm (like Dynamic Programming, Math, Memoization, or Bit Manipulation) with polynomial or linear complexity.
 You MUST write your solution inside this exact class/method structure:
 \`\`\`python
 ${payload.templateCode}
 \`\`\`
 Return ONLY the raw executable python3 code block inside markdown fences (e.g. \`\`\`python). Do not add comments inside the code block.`
-      },
-      {
-        role: 'user',
-        content: `Problem Title: ${payload.title}\nDescription:\n${payload.description}`
       }
     ];
+
+    if (payload.attempt > 1 && payload.previousFeedback && payload.previousCode) {
+      messages.push({
+        role: 'user',
+        content: `Problem Title: ${payload.title}
+Description:
+${payload.description}
+
+Here is your PREVIOUS Python code submission:
+\`\`\`python
+${payload.previousCode}
+\`\`\`
+
+NOTE: The above code failed LeetCode verification with the following error/verdict:
+${payload.previousFeedback}
+
+Please analyze this failed code and the error details carefully. Find the logical bug, edge-case failure, or missing optimization. Correct the code to resolve the issue, and return only the raw corrected python3 code block. Keep the exact class/method structure.`
+      });
+    } else {
+      messages.push({
+        role: 'user',
+        content: `Problem Title: ${payload.title}\nDescription:\n${payload.description}`
+      });
+    }
 
     const codeResponse = await grok.generateChat(messages, { maxTokens: 1500, temperature: 0.2 });
     const match = codeResponse.match(/```(?:python|py)?([\s\S]*?)```/i);
@@ -1073,6 +1142,11 @@ Return ONLY the raw executable python3 code block inside markdown fences (e.g. \
   } catch (err) {
     sendResponse({ success: false, error: err.message });
   }
+}
+
+async function handleBackgroundSolveAttempt(payload, sendResponse) {
+  await sendTelegramMessage(`*Solving daily challenge (Attempt ${payload.attempt}/${payload.maxAttempts})...*`);
+  if (sendResponse) sendResponse({ success: true });
 }
 
 async function handleBackgroundSolveAccepted(payload, sendResponse) {
@@ -1096,15 +1170,31 @@ async function handleBackgroundSolveAccepted(payload, sendResponse) {
       slug: payload.slug
     }, () => {});
 
+    isBackgroundSolveInProgress = false; // Reset background solve flag
     if (sendResponse) sendResponse({ success: true });
   } catch (err) {
     console.warn('[LC-Companion SW] handleBackgroundSolveAccepted error:', err);
+    isBackgroundSolveInProgress = false;
     if (sendResponse) sendResponse({ success: false, error: err.message });
   }
 }
 
 async function handleBackgroundSolveFailed(payload, sendResponse) {
   await sendTelegramMessage(`*Background solver failed:* ${payload.error}`);
+  
+  // Set lastAutoSolvedDate to today to prevent spamming LeetCode (protect account from block)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const date = String(now.getDate()).padStart(2, '0');
+  const today = `${year}-${month}-${date}`;
+  
+  await new Promise(resolve => {
+    chrome.storage.local.set({ lastAutoSolvedDate: today }, resolve);
+  });
+  
+  await sendTelegramMessage('*Auto-solver paused for today to prevent LeetCode spam block.*');
+  isBackgroundSolveInProgress = false; // Reset background solve flag
   if (sendResponse) sendResponse({ success: true });
 }
 
@@ -1113,13 +1203,28 @@ async function handleCloseBackgroundTab(sendResponse) {
     if (data.backgroundSolveTabId) {
       chrome.tabs.remove(data.backgroundSolveTabId, () => {
         chrome.storage.local.remove(['backgroundSolveTabId']);
+        isBackgroundSolveInProgress = false; // Reset background solve flag
+        chrome.storage.local.remove(['solveStatus']);
         if (sendResponse) sendResponse({ success: true });
       });
     } else {
+      isBackgroundSolveInProgress = false;
       if (sendResponse) sendResponse({ success: false });
     }
   });
 }
+
+// Reset solver state if the solver tab is closed manually or by any other event
+chrome.tabs.onRemoved.addListener((tabId) => {
+  chrome.storage.local.get(['backgroundSolveTabId'], data => {
+    if (data.backgroundSolveTabId === tabId) {
+      chrome.storage.local.remove(['backgroundSolveTabId']);
+      isBackgroundSolveInProgress = false;
+      chrome.storage.local.remove(['solveStatus']);
+      console.log('[LC-Companion SW] Background solve tab closed. Reset progress state.');
+    }
+  });
+});
 
 let isPolling = false;
 let isQueueCleared = false;
@@ -1188,6 +1293,12 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'sync') {
     if (changes.telegramEnabled || changes.telegramBotToken || changes.telegramChatId) {
       initTelegramPolling();
+    }
+    if (changes.streakProtect || changes.streakProtectHour || changes.streakProtectMinute || changes.streakProtectAmPm) {
+      // Clear lastAutoSolvedDate so the user can test the trigger immediately!
+      chrome.storage.local.remove(['lastAutoSolvedDate'], () => {
+        console.log('[LC-Companion SW] Cleared lastAutoSolvedDate to enable immediate trigger testing.');
+      });
     }
   }
 });
