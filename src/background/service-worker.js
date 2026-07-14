@@ -1119,7 +1119,7 @@ async function handleCloseBackgroundTab(sendResponse) {
       if (sendResponse) sendResponse({ success: false });
     }
   });
-
+}
 
 let isPolling = false;
 let isQueueCleared = false;
