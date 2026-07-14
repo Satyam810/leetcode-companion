@@ -290,6 +290,42 @@
       </div>
     </div>
 
+    <!-- Telegram Integration -->
+    <div class="card">
+      <div class="card-title">
+        📢 Telegram Integration
+        <span class="status-badge bad" id="telegram-badge">Not set</span>
+      </div>
+      <div class="form-group">
+        <div class="toggle-row">
+          <label for="telegram-enabled">Enable Telegram Alerts & Bot Commands</label>
+          <label class="switch">
+            <input type="checkbox" id="telegram-enabled" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p class="hint" style="margin-top:6px;">Allow background notifications to be sent to your Telegram, and poll for commands (/status, /today, /solution, /solve).</p>
+      </div>
+      <div class="form-group">
+        <label for="telegram-token">Telegram Bot Token</label>
+        <div class="input-wrap">
+          <input type="password" id="telegram-token" placeholder="123456789:ABCdefGhI..." autocomplete="off" />
+          <button class="toggle-vis" data-target="telegram-token" title="Toggle visibility">👁</button>
+        </div>
+        <p class="hint">Create a bot using <a href="https://t.me/BotFather" target="_blank">@BotFather</a> on Telegram and copy the API token.</p>
+      </div>
+      <div class="form-group">
+        <label for="telegram-chatid">Telegram Chat ID</label>
+        <div class="input-wrap">
+          <input type="text" id="telegram-chatid" placeholder="987654321" />
+        </div>
+        <p class="hint">Send a message to your bot and then fetch your chat ID using <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> or similar.</p>
+      </div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-secondary" id="btn-test-telegram" style="width:100%;">🔬 Test Telegram Connection</button>
+      </div>
+    </div>
+
     <!-- Auto-Sync Toggle -->
     <div class="card">
       <div class="card-title">⚡ Behaviour</div>

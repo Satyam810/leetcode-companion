@@ -27,7 +27,8 @@ function loadSettings() {
   if (logoEl) logoEl.src = chrome.runtime.getURL('assets/icons/icon128.png');
 
   chrome.storage.sync.get(
-    ['grokApiKey', 'githubToken', 'githubRepo', 'githubBranch', 'githubFolder', 'autoSync'],
+    ['grokApiKey', 'githubToken', 'githubRepo', 'githubBranch', 'githubFolder', 'autoSync',
+     'telegramEnabled', 'telegramBotToken', 'telegramChatId'],
     data => {
       if (data.grokApiKey) {
         $('grok-key').value = data.grokApiKey;
@@ -43,6 +44,15 @@ function loadSettings() {
       if (data.githubBranch) $('github-branch').value = data.githubBranch;
       if (data.githubFolder) $('github-folder').value = data.githubFolder;
       $('auto-sync').checked = !!data.autoSync;
+
+      // Telegram settings
+      $('telegram-enabled').checked = !!data.telegramEnabled;
+      if (data.telegramBotToken) {
+        $('telegram-token').value = data.telegramBotToken;
+        $('telegram-badge').textContent = 'Configured';
+        $('telegram-badge').className = 'status-badge ok';
+      }
+      if (data.telegramChatId) $('telegram-chatid').value = data.telegramChatId;
     }
   );
 }
@@ -56,11 +66,19 @@ $('btn-save').addEventListener('click', () => {
     githubBranch:      $('github-branch').value.trim() || 'main',
     githubFolder:      $('github-folder').value.trim(),
     autoSync:          $('auto-sync').checked,
+    telegramEnabled:   $('telegram-enabled').checked,
+    telegramBotToken:  $('telegram-token').value.trim(),
+    telegramChatId:    $('telegram-chatid').value.trim(),
   };
 
   if (!settings.grokApiKey)   return showToast('⚠ Grok API key is required.', 'error');
   if (!settings.githubToken)  return showToast('⚠ GitHub token is required.', 'error');
   if (!settings.githubRepo)   return showToast('⚠ GitHub repo is required.', 'error');
+
+  if (settings.telegramEnabled) {
+    if (!settings.telegramBotToken) return showToast('⚠ Telegram Bot token is required when enabled.', 'error');
+    if (!settings.telegramChatId)   return showToast('⚠ Telegram Chat ID is required when enabled.', 'error');
+  }
 
   chrome.storage.sync.set(settings, () => {
     if (chrome.runtime.lastError) {
@@ -69,6 +87,11 @@ $('btn-save').addEventListener('click', () => {
       showToast('✅ Settings saved!', 'success');
       $('grok-badge').textContent = 'Configured'; $('grok-badge').className = 'status-badge ok';
       $('github-badge').textContent = 'Configured'; $('github-badge').className = 'status-badge ok';
+      if (settings.telegramBotToken) {
+        $('telegram-badge').textContent = 'Configured'; $('telegram-badge').className = 'status-badge ok';
+      } else {
+        $('telegram-badge').textContent = 'Not set'; $('telegram-badge').className = 'status-badge bad';
+      }
     }
   });
 });
@@ -163,15 +186,49 @@ $('btn-test').addEventListener('click', async () => {
   }
 });
 
+// ── Test Telegram Connection ──────────────────────────────────────────────────
+$('btn-test-telegram').addEventListener('click', async () => {
+  const token  = $('telegram-token').value.trim();
+  const chatId = $('telegram-chatid').value.trim();
+  if (!token || !chatId) return showToast('⚠ Fill in Telegram token and Chat ID first.', 'error');
+
+  showToast('🔄 Testing Telegram Bot connection…', 'success', 10000);
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: '🔔 *LeetCode Companion* connection test successful!',
+        parse_mode: 'Markdown'
+      })
+    });
+    let data;
+    try { data = await res.json(); } catch (_) { data = {}; }
+
+    if (res.ok && data.ok) {
+      showToast('✅ Telegram test message sent successfully!', 'success');
+      $('telegram-badge').textContent = 'Verified';
+      $('telegram-badge').className = 'status-badge ok';
+    } else {
+      showToast(`❌ ${data.description || 'Failed to send message'}`, 'error');
+    }
+  } catch (e) {
+    showToast('❌ Network error: ' + e.message, 'error');
+  }
+});
+
 // ── Clear all ─────────────────────────────────────────────────────────────────
 $('btn-clear').addEventListener('click', () => {
   if (!confirm('Clear all saved settings? This cannot be undone.')) return;
   chrome.storage.sync.clear(() => {
-    ['grok-key', 'github-token', 'github-repo', 'github-branch', 'github-folder']
+    ['grok-key', 'github-token', 'github-repo', 'github-branch', 'github-folder', 'telegram-token', 'telegram-chatid']
       .forEach(id => { $(id).value = ''; });
     $('auto-sync').checked = false;
+    $('telegram-enabled').checked = false;
     $('grok-badge').textContent = 'Not set';   $('grok-badge').className = 'status-badge bad';
     $('github-badge').textContent = 'Not set'; $('github-badge').className = 'status-badge bad';
+    $('telegram-badge').textContent = 'Not set'; $('telegram-badge').className = 'status-badge bad';
     showToast('🗑 Settings cleared', 'success');
   });
 });

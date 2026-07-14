@@ -7,7 +7,8 @@ export const StorageService = {
     return new Promise(resolve => {
       chrome.storage.sync.get(
         ['grokApiKey', 'githubToken', 'githubRepo', 'githubBranch', 'githubFolder', 'autoSync',
-         'streakProtect', 'streakProtectHour', 'streakProtectMinute', 'streakProtectAmPm'],
+         'streakProtect', 'streakProtectHour', 'streakProtectMinute', 'streakProtectAmPm',
+         'telegramEnabled', 'telegramBotToken', 'telegramChatId'],
         resolve
       );
     });

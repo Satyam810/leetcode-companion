@@ -192,6 +192,16 @@ async function handleAcceptedSubmission(payload, sendResponse) {
           synced:   true,
         });
 
+        // Send Telegram alert
+        const streak = await StorageService.getStreak();
+        const commitUrl = `https://github.com/${settings.githubRepo}/blob/${settings.githubBranch || 'main'}/${filename}`;
+        await sendTelegramMessage(
+          `🎉 *Streak Protected! (Day ${streak.current})*\n\n` +
+          `📖 *Problem:* ${title} (${difficulty})\n` +
+          `💻 *Language:* ${language}\n` +
+          `🐙 *GitHub:* [View Code](${commitUrl})`
+        );
+
         sendResponse({ success: true, synced: true });
       } catch (githubErr) {
         // GitHub failed – still record as solved locally
@@ -265,6 +275,16 @@ async function handleSyncSolution(payload, sendResponse) {
       syncedAt:   new Date().toISOString(),
       synced:     true,
     });
+
+    // Send Telegram alert
+    const streak = await StorageService.getStreak();
+    const commitUrl = `https://github.com/${settings.githubRepo}/blob/${settings.githubBranch || 'main'}/${filename}`;
+    await sendTelegramMessage(
+      `🎉 *Solution Synced! (Day ${streak.current})*\n\n` +
+      `📖 *Problem:* ${payload.title} (${payload.difficulty})\n` +
+      `💻 *Language:* ${payload.language}\n` +
+      `🐙 *GitHub:* [View Code](${commitUrl})`
+    );
 
     sendResponse({ success: true });
   } catch (err) {
@@ -653,6 +673,7 @@ async function fetchDailyChallenge() {
             question {
               titleSlug
               title
+              difficulty
             }
           }
         }`
@@ -665,7 +686,8 @@ async function fetchDailyChallenge() {
     return {
       userStatus: challenge.userStatus,
       titleSlug:  challenge.question.titleSlug,
-      title:      challenge.question.title
+      title:      challenge.question.title,
+      difficulty: challenge.question.difficulty
     };
   } catch (err) {
     console.warn('[LC-Companion SW] fetchDailyChallenge warning (likely offline/network error):', err);
@@ -699,5 +721,202 @@ async function runAutoSolveImmediately() {
     return false;
   }
 }
+
+// ── Telegram Integration ──────────────────────────────────────────────────────
+let telegramPollingInterval = null;
+let lastTelegramUpdateId = 0;
+
+async function sendTelegramMessage(text) {
+  try {
+    const settings = await StorageService.getSettings();
+    if (!settings.telegramEnabled || !settings.telegramBotToken || !settings.telegramChatId) {
+      return;
+    }
+    await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: settings.telegramChatId,
+        text: text,
+        parse_mode: 'Markdown'
+      })
+    });
+  } catch (err) {
+    console.warn('[LC-Companion SW] sendTelegramMessage warning:', err);
+  }
+}
+
+async function handleTelegramCommand(cmd) {
+  const parts = cmd.split(' ');
+  const command = parts[0].toLowerCase();
+
+  switch (command) {
+    case '/start':
+    case '/help':
+      await sendTelegramMessage(
+        `🤖 *LeetCode Companion Bot*\n\n` +
+        `Here are the commands you can use:\n` +
+        `• /status - View current streak and solved stats\n` +
+        `• /today - Get today's daily challenge details\n` +
+        `• /solution - Fetch today's AI-generated solution code\n` +
+        `• /solve - Remotely trigger the Auto-Solve pipeline on your PC\n` +
+        `• /help - Show this list of commands`
+      );
+      break;
+
+    case '/status':
+      const stats = await StorageService.getStats();
+      const streak = await StorageService.getStreak();
+      const statusText = 
+        `📊 *LeetCode Companion Stats*\n\n` +
+        `🔥 *Active Streak:* ${streak.current} days (Longest: ${streak.longest})\n` +
+        `🟢 *Easy Solved:* ${stats.easy}\n` +
+        `🟡 *Medium Solved:* ${stats.medium}\n` +
+        `🔴 *Hard Solved:* ${stats.hard}\n` +
+        `⚪ *Unknown/Other:* ${stats.unknown || 0}`;
+      await sendTelegramMessage(statusText);
+      break;
+
+    case '/today':
+      await sendTelegramTodayCommand();
+      break;
+
+    case '/solution':
+      await sendTelegramSolutionCommand();
+      break;
+
+    case '/solve':
+      await sendTelegramMessage('🚀 *Triggering Auto-Solve on your desktop…*');
+      try {
+        const triggered = await runAutoSolveImmediately();
+        if (triggered) {
+          await sendTelegramMessage('✅ *Auto-solve triggered! Check your LeetCode tab.*');
+        } else {
+          await sendTelegramMessage('❌ *Failed to trigger solve.* Make sure LeetCode is reachable.');
+        }
+      } catch (err) {
+        await sendTelegramMessage(`❌ *Failed to trigger solve:* ${err.message}`);
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+
+async function sendTelegramTodayCommand() {
+  await sendTelegramMessage('⏳ *Fetching today\'s LeetCode Daily Challenge…*');
+  const daily = await fetchDailyChallenge();
+  if (!daily) {
+    await sendTelegramMessage('❌ *Failed to fetch today\'s challenge.* Ensure you are online.');
+    return;
+  }
+  const statusIcon = daily.userStatus === 'Finish' ? '✅' : '❌';
+  const statusMsg = daily.userStatus === 'Finish' ? 'Already Solved' : 'Unsolved';
+  
+  const text = 
+    `📅 *LeetCode Daily Challenge*\n\n` +
+    `📖 *Title:* ${daily.title}\n` +
+    `🏷️ *Difficulty:* ${daily.difficulty}\n` +
+    `${statusIcon} *Status:* ${statusMsg}\n\n` +
+    `🔗 *Solve here:* https://leetcode.com/problems/${daily.titleSlug}/`;
+    
+  await sendTelegramMessage(text);
+}
+
+async function sendTelegramSolutionCommand() {
+  const settings = await StorageService.getSettings();
+  if (!settings.grokApiKey) {
+    await sendTelegramMessage('❌ *Groq API key not configured.* Open the settings page to add it.');
+    return;
+  }
+
+  await sendTelegramMessage('⏳ *Generating solution via Groq LLaMA 3.3…*');
+  const daily = await fetchDailyChallenge();
+  if (!daily) {
+    await sendTelegramMessage('❌ *Failed to fetch today\'s challenge.*');
+    return;
+  }
+
+  const description = await fetchProblemDescription(daily.titleSlug);
+  if (!description) {
+    await sendTelegramMessage('❌ *Failed to retrieve the problem description.*');
+    return;
+  }
+
+  try {
+    const grok = new GrokAPI(settings.grokApiKey);
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are an expert software engineer. Generate the optimal solution code for the LeetCode problem. Return ONLY the code block inside standard markdown fences (e.g., ```python) without any conversational introduction or conclusion.'
+      },
+      {
+        role: 'user',
+        content: `Problem Title: ${daily.title}\nDescription:\n${description}`
+      }
+    ];
+    const codeResponse = await grok.generateChat(messages, { maxTokens: 1500, temperature: 0.2 });
+    
+    await sendTelegramMessage(`💡 *Optimal AI Solution for "${daily.title}" (${daily.difficulty}):*`);
+    await sendTelegramMessage(codeResponse);
+  } catch (err) {
+    await sendTelegramMessage(`❌ *Failed to generate solution:* ${err.message}`);
+  }
+}
+
+async function pollTelegramUpdates() {
+  try {
+    const settings = await StorageService.getSettings();
+    if (!settings.telegramEnabled || !settings.telegramBotToken || !settings.telegramChatId) {
+      if (telegramPollingInterval) {
+        clearInterval(telegramPollingInterval);
+        telegramPollingInterval = null;
+      }
+      return;
+    }
+
+    const res = await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/getUpdates?offset=${lastTelegramUpdateId + 1}&timeout=10`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.ok || !data.result || data.result.length === 0) return;
+
+    for (const update of data.result) {
+      lastTelegramUpdateId = update.update_id;
+      const message = update.message;
+      if (!message || !message.text) continue;
+
+      if (String(message.chat.id) !== String(settings.telegramChatId)) {
+        continue;
+      }
+
+      await handleTelegramCommand(message.text.trim());
+    }
+  } catch (err) {
+    console.warn('[LC-Companion SW] pollTelegramUpdates warning:', err);
+  }
+}
+
+function initTelegramPolling() {
+  if (telegramPollingInterval) {
+    clearInterval(telegramPollingInterval);
+    telegramPollingInterval = null;
+  }
+  // Check updates every 30 seconds
+  telegramPollingInterval = setInterval(pollTelegramUpdates, 30000);
+  pollTelegramUpdates();
+}
+
+// Initialize on startup
+initTelegramPolling();
+
+// Re-init polling when settings are changed
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'sync') {
+    if (changes.telegramEnabled || changes.telegramBotToken || changes.telegramChatId) {
+      initTelegramPolling();
+    }
+  }
+});
 
 
